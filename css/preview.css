@@ -1,0 +1,223 @@
+.comparison {
+    padding: 15px 30px 30px 30px;
+}
+
+.font-selectors {
+    margin-bottom: 30px;
+}
+
+.comparison-grid {
+    display: flex;
+    gap: 30px;
+}
+
+.font-preview {
+    flex: 50%;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    min-height: 200px;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+    min-width: 0;
+}
+
+.font-preview h3 {
+    display: none;
+}
+
+.preview-text {
+    flex: 1;
+    font-size: 16px;
+    line-height: 1.4;
+    color: var(--text-primary);
+    white-space: pre;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 25px;
+    box-sizing: border-box;
+}
+
+/* Override syntax highlighting colors to work with custom fonts */
+.font-preview .shj-syn-deleted,
+.font-preview .shj-syn-inserted,
+.font-preview .shj-syn-keyword,
+.font-preview .shj-syn-string,
+.font-preview .shj-syn-comment,
+.font-preview .shj-syn-type,
+.font-preview .shj-syn-generic,
+.font-preview .shj-syn-num,
+.font-preview .shj-syn-bool,
+.font-preview .shj-syn-const,
+.font-preview .shj-syn-func,
+.font-preview .shj-syn-op,
+.font-preview .shj-syn-preproc,
+.font-preview .shj-syn-punct {
+    font-family: inherit !important;
+}
+
+/* Code blocks should fill the entire container */
+.font-preview .preview-text.shj-lang-js,
+.font-preview .preview-text.shj-lang-ts,
+.font-preview .preview-text.shj-lang-py,
+.font-preview .preview-text.shj-lang-java,
+.font-preview .preview-text.shj-lang-c,
+.font-preview .preview-text.shj-lang-go,
+.font-preview .preview-text.shj-lang-rs,
+.font-preview .preview-text.shj-lang-css,
+.font-preview .preview-text.shj-lang-html,
+.font-preview .preview-text.shj-lang-json,
+.font-preview .preview-text.shj-lang-sql,
+.font-preview .preview-text.shj-lang-bash,
+.font-preview .preview-text.shj-lang-md,
+.font-preview .preview-text.shj-lang-xml,
+.font-preview .preview-text.shj-lang-yaml {
+    background: var(--bg-tertiary);
+    padding: 25px !important;
+    margin: 0;
+    border-radius: 8px;
+    box-sizing: border-box;
+    height: 100%;
+}
+
+.size-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.size-controls label {
+    font-weight: normal;
+    color: var(--text-primary);
+}
+
+.language-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.language-controls label {
+    font-weight: normal;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+.size-slider {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border-input);
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.size-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    cursor: pointer;
+}
+
+.size-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    cursor: pointer;
+    border: none;
+}
+
+.size-display {
+    font-weight: normal;
+    color: var(--text-primary);
+    min-width: 50px;
+}
+
+.language-select {
+    min-width: 200px;
+    padding: 12px 15px;
+    border: 2px solid var(--border-input);
+    border-radius: 8px;
+    font-size: 16px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-family: inherit;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.language-select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.font-section-title {
+    margin-bottom: 15px;
+    color: var(--text-primary);
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.font-select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid var(--border-input);
+    border-radius: 8px;
+    font-size: 16px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-family: inherit;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.font-select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.font-select option {
+    padding: 8px;
+}
+
+.placeholder-text {
+    color: var(--text-placeholder);
+    font-style: italic;
+}
+
+@media (max-width: 768px) {
+    .font-selectors,
+    .comparison-grid,
+    .top-section {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .top-section {
+        grid-template-columns: 1fr;
+    }
+
+    .header-content {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .theme-toggle {
+        order: -1;
+    }
+
+    .header h1 {
+        font-size: 2rem;
+    }
+
+    .controls,
+    .comparison {
+        padding: 20px;
+    }
+}
