@@ -2,7 +2,7 @@
 
 A simple utility to compare two fonts side by side.
 
-![screenshot](assets/Screenshot 2025-08-02 at 18.52.22.jpg)
+![screenshot](assets/screenshot-2025-08-02-at-18.52.22.jpg)
 
 ## Features
 
@@ -11,7 +11,7 @@ A simple utility to compare two fonts side by side.
 * **Live Preview:** See how your text looks with different fonts in real-time.
 * **Adjustable Font Size:** Use a slider to change the font size.
 * **Syntax Highlighting:** Preview how your code will look with different fonts and syntax highlighting themes.
-  ![code comparison screenshot](assets/Screenshot 2025-08-02 at 18.55.59.jpg)
+  ![code comparison screenshot](assets/screenshot-2025-08-02-at-18.55.59.jpg)
   * Supported languages: Plain Text, JavaScript, TypeScript, Python, Java, C, Go, Rust, CSS, HTML, JSON, SQL, Bash, Markdown, XML, YAML
 * **Light & Dark Mode:** Switch between light and dark themes for your comfort.
 
