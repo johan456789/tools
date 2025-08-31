@@ -149,10 +149,15 @@
 
 .file-input {
     position: absolute;
-    opacity: 0;
-    width: 100%;
-    height: 100%;
-    cursor: pointer;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 .file-input-button {
@@ -166,6 +171,7 @@
     font-weight: 600;
     transition: background-color 0.3s ease;
     width: 100%;
+    cursor: pointer;
 }
 
 .file-input-button:hover {
