@@ -1,3 +1,11 @@
+@font-face {
+    font-family: 'ANDFallback';
+    src: url('../assets/fonts/AND-Regular.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
 .comparison {
     padding: 15px 30px 30px 30px;
 }
@@ -113,6 +121,7 @@
     background: var(--border-input);
     outline: none;
     -webkit-appearance: none;
+    appearance: none;
 }
 
 .size-slider::-webkit-slider-thumb {
@@ -192,13 +201,14 @@
 }
 
 @media (max-width: 768px) {
+
     .font-selectors,
     .comparison-grid,
     .top-section {
         flex-direction: column;
         gap: 20px;
     }
-    
+
     .top-section {
         grid-template-columns: 1fr;
     }
