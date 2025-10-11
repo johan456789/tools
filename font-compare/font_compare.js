@@ -577,7 +577,7 @@ console.log(\`Fibonacci(10) = \${result}\`);`;
     if (this.currentLanguage === "plain" || !this.highlighter) {
       // Plain text mode
       element.textContent = text;
-      element.style.fontFamily = `"${fontFamily}", monospace`;
+      element.style.fontFamily = `"${fontFamily}", "ANDFallback"`;
     } else {
       // Syntax highlighting mode
       element.textContent = text;
@@ -593,19 +593,19 @@ console.log(\`Fibonacci(10) = \${result}\`);`;
         console.error("Syntax highlighting failed:", error);
         // Fallback to plain text
         element.textContent = text;
-        element.style.fontFamily = `"${fontFamily}", monospace`;
+        element.style.fontFamily = `"${fontFamily}", "ANDFallback"`;
       }
     }
   }
 
   applyFontToHighlightedElements(container, fontFamily) {
     // Apply font to the container
-    container.style.fontFamily = `"${fontFamily}", monospace`;
+    container.style.fontFamily = `"${fontFamily}", "ANDFallback"`;
 
     // Apply font to all child elements (syntax highlighted tokens)
     const highlightedElements = container.querySelectorAll("*");
     highlightedElements.forEach((el) => {
-      el.style.fontFamily = `"${fontFamily}", monospace`;
+      el.style.fontFamily = `"${fontFamily}", "ANDFallback"`;
     });
   }
 
