@@ -1,151 +1,190 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Font Comparison Tool</title>
     <script>
-        // Immediately apply theme from local storage to prevent FOUC
-        (function() {
-            const savedTheme = localStorage.getItem('font-comparison-theme') || 'light';
-            document.documentElement.setAttribute('data-theme', savedTheme);
-        })();
+      // Immediately apply theme from local storage to prevent FOUC
+      (function () {
+        const savedTheme =
+          localStorage.getItem("font-comparison-theme") || "light";
+        document.documentElement.setAttribute("data-theme", savedTheme);
+      })();
     </script>
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/controls.css">
-    <link rel="stylesheet" href="css/preview.css">
-</head>
-<body>
+    <link rel="stylesheet" href="css/main.css" />
+    <link rel="stylesheet" href="css/controls.css" />
+    <link rel="stylesheet" href="css/preview.css" />
+  </head>
+  <body>
     <div class="container">
-        <div class="header">
-            <div class="header-content">
-                <div class="title-section">
-                    <h1>Font Comparison Tool</h1>
-                    <p>Upload two fonts and compare them side by side</p>
-                </div>
-                <div class="theme-toggle">
-                    <button id="theme-toggle-btn" class="theme-btn" title="Toggle Theme">
-                        <span class="theme-icon">🌙</span>
-                    </button>
-                </div>
-            </div>
+      <div class="header">
+        <div class="header-content">
+          <div class="title-section">
+            <h1>Font Comparison Tool</h1>
+            <p>Upload two fonts and compare them side by side</p>
+          </div>
+          <div class="theme-toggle">
+            <button
+              id="theme-toggle-btn"
+              class="theme-btn"
+              title="Toggle Theme"
+            >
+              <span class="theme-icon">🌙</span>
+            </button>
+          </div>
         </div>
+      </div>
 
-        <div class="controls">
-            <div class="top-section">
-                <div class="upload-section">
-                    <label>Fonts</label>
-                    <div class="upload-content">
-                        <div class="file-input-wrapper">
-                            <input type="file" id="font-upload-input" class="file-input" accept=".ttf,.otf,.woff,.woff2" multiple>
-                            <label for="font-upload-input" class="file-input-button" role="button">📁 Upload Font Files</label>
-                        </div>
-                        <div class="upload-hint">Upload TTF, OTF, WOFF, or WOFF2 files. Multiple files supported.</div>
-                        
-                        <div class="local-fonts-section">
-                            <button id="load-local-fonts-btn" class="file-input-button" style="margin-top: 15px; background: #28a745; cursor: pointer;">
-                                🔍 Load System Fonts
-                            </button>
-                            <div class="upload-hint" style="margin-top: 5px;">
-                                Click to detect and load fonts installed on your system
-                            </div>
-                        </div>
-                    </div>
+      <div class="controls">
+        <div class="top-section">
+          <div class="upload-section">
+            <label>Fonts</label>
+            <div class="upload-content">
+              <div class="file-input-wrapper">
+                <input
+                  type="file"
+                  id="font-upload-input"
+                  class="file-input"
+                  accept=".ttf,.otf,.woff,.woff2"
+                  multiple
+                />
+                <label
+                  for="font-upload-input"
+                  class="file-input-button"
+                  role="button"
+                  >📁 Upload Font Files</label
+                >
+              </div>
+              <div class="upload-hint">
+                Upload TTF, OTF, WOFF, or WOFF2 files. Multiple files supported.
+              </div>
+
+              <div class="local-fonts-section">
+                <button
+                  id="load-local-fonts-btn"
+                  class="file-input-button"
+                  style="margin-top: 15px; background: #28a745; cursor: pointer"
+                >
+                  🔍 Load System Fonts
+                </button>
+                <div class="upload-hint" style="margin-top: 5px">
+                  Click to detect and load fonts installed on your system
                 </div>
+              </div>
+            </div>
+          </div>
 
-                <div class="text-section">
-                    <div class="text-header">
-                        <label for="sample-text">Sample Text</label>
-                        <div class="sample-buttons">
-                            <button id="plaintext-sample-btn" class="sample-btn">Plaintext Sample</button>
-                            <button id="code-sample-btn" class="sample-btn">Code Sample</button>
-                        </div>
-                    </div>
-                    <textarea 
-                        id="sample-text" 
-                        class="text-input" 
-                        placeholder="Type or paste your text here to see how it looks in different fonts..."
-                    >the quick brown fox jumps over the lazy dog
+          <div class="text-section">
+            <div class="text-header">
+              <label for="sample-text">Sample Text</label>
+              <div class="sample-buttons">
+                <button id="plaintext-sample-btn" class="sample-btn">
+                  Plaintext Sample
+                </button>
+                <button id="code-sample-btn" class="sample-btn">
+                  Code Sample
+                </button>
+              </div>
+            </div>
+            <textarea
+              id="sample-text"
+              class="text-input"
+              placeholder="Type or paste your text here to see how it looks in different fonts..."
+            >
+the quick brown fox jumps over the lazy dog
 THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG
-1234567890-=!@#$%^&*()_+</textarea>
-                </div>
-            </div>
-
-            <div class="size-controls">
-                <label for="font-size">Font Size:</label>
-                <input type="range" id="font-size" class="size-slider" min="1" max="72" value="16">
-                <span id="size-display" class="size-display">16px</span>
-            </div>
-
-            <div class="language-controls">
-                <label for="language-select">Syntax Highlighting Language:</label>
-                <select id="language-select" class="language-select">
-                    <option value="plain" selected>Plain Text</option>
-                    <option value="js">JavaScript</option>
-                    <option value="ts">TypeScript</option>
-                    <option value="py">Python</option>
-                    <option value="java">Java</option>
-                    <option value="c">C</option>
-                    <option value="go">Go</option>
-                    <option value="rs">Rust</option>
-                    <option value="css">CSS</option>
-                    <option value="html">HTML</option>
-                    <option value="json">JSON</option>
-                    <option value="sql">SQL</option>
-                    <option value="bash">Bash</option>
-                    <option value="md">Markdown</option>
-                    <option value="xml">XML</option>
-                    <option value="yaml">YAML</option>
-                </select>
-            </div>
+1234567890-=!@#$%^&*()_+</textarea
+            >
+          </div>
         </div>
 
-        <div class="comparison">
-            <div class="font-selectors">
-                <div class="font-selector">
-                    <h4 class="font-section-title">Font 1</h4>
-                    <select id="font1-select" class="font-select">
-                        <option value="">Select font...</option>
-                        <optgroup label="System Fonts">
-                            <!-- System fonts will be populated dynamically -->
-                        </optgroup>
-                        <optgroup label="Uploaded Fonts" id="font1-uploaded-group">
-                        </optgroup>
-                    </select>
-                    <div id="font1-name" class="font-name">No font selected</div>
-                </div>
-
-                <div class="font-selector">
-                    <h4 class="font-section-title">Font 2</h4>
-                    <select id="font2-select" class="font-select">
-                        <option value="">Select font...</option>
-                        <optgroup label="System Fonts">
-                            <!-- System fonts will be populated dynamically -->
-                        </optgroup>
-                        <optgroup label="Uploaded Fonts" id="font2-uploaded-group">
-                        </optgroup>
-                    </select>
-                    <div id="font2-name" class="font-name">No font selected</div>
-                </div>
-            </div>
-            <div class="comparison-grid">
-                <div class="font-preview">
-                    <h3 id="preview1-title">Font 1 Preview</h3>
-                    <div id="preview1" class="preview-text placeholder-text">
-                        Upload a font to see the preview
-                    </div>
-                </div>
-
-                <div class="font-preview">
-                    <h3 id="preview2-title">Font 2 Preview</h3>
-                    <div id="preview2" class="preview-text placeholder-text">
-                        Upload a font to see the preview
-                    </div>
-                </div>
-            </div>
+        <div class="size-controls">
+          <label for="font-size">Font Size:</label>
+          <input
+            type="range"
+            id="font-size"
+            class="size-slider"
+            min="1"
+            max="72"
+            value="16"
+          />
+          <span id="size-display" class="size-display">16px</span>
         </div>
+
+        <div class="language-controls">
+          <label for="language-select">Syntax Highlighting Language:</label>
+          <select id="language-select" class="language-select">
+            <option value="plain" selected>Plain Text</option>
+            <option value="js">JavaScript</option>
+            <option value="ts">TypeScript</option>
+            <option value="py">Python</option>
+            <option value="java">Java</option>
+            <option value="c">C</option>
+            <option value="go">Go</option>
+            <option value="rs">Rust</option>
+            <option value="css">CSS</option>
+            <option value="html">HTML</option>
+            <option value="json">JSON</option>
+            <option value="sql">SQL</option>
+            <option value="bash">Bash</option>
+            <option value="md">Markdown</option>
+            <option value="xml">XML</option>
+            <option value="yaml">YAML</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="comparison">
+        <div class="font-selectors">
+          <div class="font-selector">
+            <h4 class="font-section-title">Font 1</h4>
+            <select id="font1-select" class="font-select">
+              <option value="">Select font...</option>
+              <optgroup label="System Fonts">
+                <!-- System fonts will be populated dynamically -->
+              </optgroup>
+              <optgroup
+                label="Uploaded Fonts"
+                id="font1-uploaded-group"
+              ></optgroup>
+            </select>
+            <div id="font1-name" class="font-name">No font selected</div>
+          </div>
+
+          <div class="font-selector">
+            <h4 class="font-section-title">Font 2</h4>
+            <select id="font2-select" class="font-select">
+              <option value="">Select font...</option>
+              <optgroup label="System Fonts">
+                <!-- System fonts will be populated dynamically -->
+              </optgroup>
+              <optgroup
+                label="Uploaded Fonts"
+                id="font2-uploaded-group"
+              ></optgroup>
+            </select>
+            <div id="font2-name" class="font-name">No font selected</div>
+          </div>
+        </div>
+        <div class="comparison-grid">
+          <div class="font-preview">
+            <h3 id="preview1-title">Font 1 Preview</h3>
+            <div id="preview1" class="preview-text placeholder-text">
+              Upload a font to see the preview
+            </div>
+          </div>
+
+          <div class="font-preview">
+            <h3 id="preview2-title">Font 2 Preview</h3>
+            <div id="preview2" class="preview-text placeholder-text">
+              Upload a font to see the preview
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script src="font_compare.js"></script>
-</body>
+  </body>
 </html>
