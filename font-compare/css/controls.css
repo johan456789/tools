@@ -85,16 +85,12 @@
     border-color: var(--accent-color);
 }
 
-.font-selectors {
-    display: flex;
-    gap: 30px;
-    margin-bottom: 25px;
-}
-
 .font-selector {
-    flex: 50%;
     text-align: center;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .upload-section {
