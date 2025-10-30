@@ -136,6 +136,32 @@
     font-style: italic;
 }
 
+.local-fonts-section {
+    margin-top: 15px;
+    width: 100%;
+}
+
+.local-fonts-section .file-input-button {
+    display: block !important;
+    width: 100%;
+    margin-top: 15px;
+    background: #28a745 !important;
+    color: white !important;
+    cursor: pointer;
+    visibility: visible;
+    opacity: 1;
+}
+
+.local-fonts-section .file-input-button:hover {
+    background: #218838 !important;
+}
+
+.local-fonts-section .upload-hint {
+    margin-top: 8px;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
 .file-input-wrapper {
     position: relative;
     display: inline-block;
@@ -180,4 +206,39 @@
     color: var(--text-primary);
     min-height: 24px;
     display: none;
+}
+
+@media (max-width: 768px) {
+    .local-fonts-section {
+        margin-top: 20px;
+    }
+
+    .local-fonts-section .file-input-button {
+        display: block !important;
+        width: 100%;
+        padding: 18px 25px;
+        font-size: 16px;
+        font-weight: 600;
+        background: #28a745 !important;
+        color: white !important;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        visibility: visible !important;
+        opacity: 1 !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .local-fonts-section .file-input-button:active {
+        background: #218838 !important;
+        transform: scale(0.98);
+    }
+
+    .local-fonts-section .upload-hint {
+        margin-top: 10px;
+        font-size: 13px;
+        color: var(--text-primary);
+        opacity: 0.9;
+        font-style: normal;
+    }
 }
