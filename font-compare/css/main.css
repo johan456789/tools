@@ -113,16 +113,6 @@ body {
     transform: scale(1.05);
 }
 
-.theme-btn.active {
-    background: rgba(255, 255, 255, 0.3);
-    border-color: rgba(255, 255, 255, 0.5);
-    color: white;
-}
-
 .theme-icon {
     transition: transform 0.3s ease;
-}
-
-.theme-btn:active .theme-icon {
-    transform: scale(0.9);
 }

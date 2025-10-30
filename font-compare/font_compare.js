@@ -145,11 +145,9 @@ class FontComparator {
 
     if (theme === "light") {
       themeIcon.textContent = "🌙"; // Show moon to indicate "switch to dark"
-      toggleBtn.classList.remove("active");
       toggleBtn.title = "Switch to Dark Mode";
     } else {
       themeIcon.textContent = "☀️"; // Show sun to indicate "switch to light"
-      toggleBtn.classList.add("active");
       toggleBtn.title = "Switch to Light Mode";
     }
 
