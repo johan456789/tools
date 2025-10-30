@@ -245,7 +245,10 @@
         font-size: 2rem;
     }
 
-    .controls,
+    .controls {
+        padding: 20px;
+    }
+
     .comparison {
         padding: 20px;
     }
