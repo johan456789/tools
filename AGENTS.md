@@ -6,7 +6,7 @@ This is the tools repo. All tools will be hosted in path `/tools` in github page
 
 ### When you create a new tool
 
-- create a folder using the tools name in kebab-case
+- create a folder using the tool's name in kebab-case
 - create a README in that folder explaining what the tool is
 - add a new hyperlink to the `index.html` so people can find it in the directory
 
