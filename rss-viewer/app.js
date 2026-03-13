@@ -506,10 +506,10 @@ function normalizeArticle(article, index) {
 
 function findFirstNode(parent, names) {
   const wantedNames = Array.isArray(names) ? names : [names];
-  const stack = [parent];
+  const queue = [parent];
 
-  while (stack.length > 0) {
-    const current = stack.shift();
+  while (queue.length > 0) {
+    const current = queue.shift();
     if (!(current instanceof Element || current instanceof Document)) {
       continue;
     }
@@ -522,7 +522,7 @@ function findFirstNode(parent, names) {
       if (wantedNames.includes(child.localName)) {
         return child;
       }
-      stack.push(child);
+      queue.push(child);
     }
   }
 
