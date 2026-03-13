@@ -25,6 +25,7 @@ const feedCache = new Map();
 let currentArticles = [];
 let currentModalArticle = null;
 let lastFocusedCard = null;
+let savedBodyPaddingRight = "";
 
 const parser = new DOMParser();
 const serializer = new XMLSerializer();
@@ -553,13 +554,13 @@ async function openArticle(articleId) {
     elements.modalTitle.removeAttribute("href");
   }
   elements.modal.hidden = false;
-  document.body.classList.add("modal-open");
+  lockBodyScrollForModal();
   renderModalBody();
 }
 
 function closeModal() {
   elements.modal.hidden = true;
-  document.body.classList.remove("modal-open");
+  unlockBodyScrollForModal();
   currentModalArticle = null;
   if (lastFocusedCard) {
     lastFocusedCard.focus();
@@ -715,6 +716,23 @@ function formatXml(value) {
   }
 
   return formatted.join("\n");
+}
+
+function lockBodyScrollForModal() {
+  const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+  if (!document.body.classList.contains("modal-open")) {
+    savedBodyPaddingRight = document.body.style.paddingRight;
+  }
+
+  document.body.classList.add("modal-open");
+  if (scrollbarWidth > 0) {
+    document.body.style.paddingRight = `${scrollbarWidth}px`;
+  }
+}
+
+function unlockBodyScrollForModal() {
+  document.body.classList.remove("modal-open");
+  document.body.style.paddingRight = savedBodyPaddingRight;
 }
 
 function escapeHtml(value) {
