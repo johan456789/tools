@@ -56,7 +56,7 @@ window.addEventListener("popstate", () => {
   const previousFeed = elements.feedUrlInput.value;
   syncInputFromUrl();
   if (elements.feedUrlInput.value && elements.feedUrlInput.value !== previousFeed) {
-    if (!elements.proxyUrlInput.value.trim()) {
+    if (isProxyRequiredForFeed(elements.feedUrlInput.value) && !elements.proxyUrlInput.value.trim()) {
       setStatus("CORS header proxy URL is a required field.", "error");
       resetFeedView();
       updateDocumentTitle(elements.feedUrlInput.value);
@@ -76,9 +76,9 @@ window.addEventListener("popstate", () => {
 restoreRememberedProxy();
 syncInputFromUrl();
 updateDocumentTitle(elements.feedUrlInput.value);
-if (elements.feedUrlInput.value && elements.proxyUrlInput.value.trim()) {
+if (elements.feedUrlInput.value && canLoadFeed(elements.feedUrlInput.value, elements.proxyUrlInput.value)) {
   loadFeed(elements.feedUrlInput.value, elements.proxyUrlInput.value);
-} else if (elements.feedUrlInput.value) {
+} else if (elements.feedUrlInput.value && isProxyRequiredForFeed(elements.feedUrlInput.value)) {
   setStatus("CORS header proxy URL is a required field.", "error");
   resetFeedView();
 } else {
@@ -95,7 +95,7 @@ async function handleSubmit(event) {
     return;
   }
 
-  if (!proxyUrl) {
+  if (isProxyRequiredForFeed(feedUrl) && !proxyUrl) {
     setStatus("CORS header proxy URL is a required field.", "error");
     elements.proxyUrlInput.focus();
     return;
@@ -153,7 +153,7 @@ function syncRememberedProxyPreference() {
 async function loadFeed(feedUrl, proxyUrl) {
   const normalizedFeedUrl = feedUrl.trim();
   const normalizedProxyUrl = proxyUrl.trim();
-  const feedCacheKey = `${normalizedProxyUrl}::${normalizedFeedUrl}`;
+  const feedCacheKey = buildFeedCacheKey(normalizedFeedUrl, normalizedProxyUrl);
   articleCache.clear();
   currentArticles = [];
   closeModal();
@@ -237,7 +237,98 @@ function getSiteNameFromUrl(feedUrl) {
 }
 
 async function fetchFeedText(url, proxyUrl) {
+  if (isLocalFeedUrl(url)) {
+    return fetchTextDirect(url);
+  }
+
   return fetchTextWithProxy(url, proxyUrl);
+}
+
+function buildFeedCacheKey(feedUrl, proxyUrl) {
+  if (isLocalFeedUrl(feedUrl)) {
+    return `direct::${feedUrl}`;
+  }
+
+  return `${proxyUrl}::${feedUrl}`;
+}
+
+function canLoadFeed(feedUrl, proxyUrl) {
+  return Boolean(feedUrl.trim()) && (!isProxyRequiredForFeed(feedUrl) || Boolean(proxyUrl.trim()));
+}
+
+function isProxyRequiredForFeed(feedUrl) {
+  return !isLocalFeedUrl(feedUrl);
+}
+
+function isLocalFeedUrl(url) {
+  try {
+    const parsedUrl = new URL(url);
+    const hostname = parsedUrl.hostname.toLowerCase();
+
+    if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]") {
+      return true;
+    }
+
+    if (hostname.endsWith(".local")) {
+      return true;
+    }
+
+    return isPrivateIpv4Address(hostname);
+  } catch {
+    return false;
+  }
+}
+
+function isPrivateIpv4Address(hostname) {
+  const ipv4Pattern = /^\d{1,3}(?:\.\d{1,3}){3}$/;
+  if (!ipv4Pattern.test(hostname)) {
+    return false;
+  }
+
+  const octets = hostname.split(".").map(Number);
+  if (octets.some((octet) => octet < 0 || octet > 255)) {
+    return false;
+  }
+
+  if (octets[0] === 10) {
+    return true;
+  }
+
+  if (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) {
+    return true;
+  }
+
+  if (octets[0] === 192 && octets[1] === 168) {
+    return true;
+  }
+
+  return false;
+}
+
+async function fetchTextDirect(url) {
+  try {
+    const response = await fetchWithTimeout(url, {
+      headers: {
+        Accept:
+          "application/atom+xml, application/rss+xml, application/xml, text/xml, text/html;q=0.9, */*;q=0.8",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`direct request failed with ${response.status}`);
+    }
+
+    const text = await response.text();
+    if (!text || !text.trim()) {
+      throw new Error("direct request returned empty content");
+    }
+
+    return text;
+  } catch (error) {
+    throw new Error(
+      `Could not fetch this local URL directly from the browser. ${summarizeAttemptError(error)}`
+    );
+  }
 }
 
 async function fetchTextWithProxy(url, proxyUrl) {
