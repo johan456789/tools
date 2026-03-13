@@ -1,6 +1,6 @@
 # README for agents
 
-This the tools repo. All tools will be hosted in path `/tools` in github pages.
+This is the tools repo. All tools will be hosted in path `/tools` in github pages.
 
 ## Rules
 
