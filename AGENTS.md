@@ -18,3 +18,4 @@ This is the tools repo. All tools will be hosted in path `/tools` in github page
   - [Pyodide](https://pyodide.org/) is a distribution of Python that’s compiled to WebAssembly and designed to run directly in browsers. It also includes [micropip](https://github.com/pyodide/micropip) — a mechanism that can load extra pure-Python packages from PyPI via CORS. This allows you to use Python packages too.
 - persist small states using URL params
 - persist large states using localStorage
+  - use "tools:{tool_name}:{foobar}" as key name. Scoping reduces the chance of collision.

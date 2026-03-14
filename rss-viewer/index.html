@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RSS Viewer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/themes/prism.min.css"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <h1><a class="hero-title-link" href="./index.html">RSS Viewer</a></h1>
+          <p class="hero-text">
+            Paste an RSS or Atom feed URL to browse articles and check their
+            source code
+          </p>
+        </div>
+      </header>
+
+      <main class="content">
+        <form id="feed-form" class="feed-form" novalidate>
+          <label for="feed-url" class="field-label">Feed URL</label>
+          <div class="field-row">
+            <input
+              id="feed-url"
+              name="feed"
+              type="url"
+              inputmode="url"
+              placeholder="https://example.com/feed.xml"
+              required
+            />
+            <button type="submit" id="load-button">Load feed</button>
+          </div>
+          <label for="proxy-url" class="field-label field-label-secondary">CORS Header Proxy URL</label>
+          <input
+            id="proxy-url"
+            name="proxy"
+            type="url"
+            inputmode="url"
+            placeholder="https://cors-header-proxy.example.com"
+            required
+          />
+          <label class="remember-proxy">
+            <input id="remember-proxy" type="checkbox" />
+            <span>Remember proxy on this device</span>
+          </label>
+          <p class="hint" id="status-message" aria-live="polite"></p>
+        </form>
+
+        <section class="feed-summary panel" id="feed-summary" hidden>
+          <div>
+            <p class="eyebrow" id="feed-meta-label">Current feed</p>
+            <h2 id="feed-title">Untitled feed</h2>
+          </div>
+          <p id="feed-description" class="feed-description"></p>
+        </section>
+
+        <section
+          class="articles-grid"
+          id="articles-grid"
+          aria-live="polite"
+        ></section>
+      </main>
+    </div>
+
+    <div
+      class="modal"
+      id="article-modal"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+    >
+      <div class="modal-backdrop" data-close-modal="true"></div>
+      <article class="modal-card" id="modal-card">
+        <div class="modal-toolbar">
+          <label class="modal-view-control" for="modal-view-mode">
+            <select id="modal-view-mode" class="modal-view-select">
+              <option value="rendered" selected>Rendered</option>
+              <option value="source">Source</option>
+            </select>
+          </label>
+
+          <button
+            type="button"
+            class="modal-close"
+            id="close-modal-button"
+            aria-label="Close article"
+          >
+            Close
+          </button>
+        </div>
+
+        <header class="modal-header" id="modal-header">
+          <p class="modal-meta" id="modal-date"></p>
+          <h2>
+            <a
+              id="modal-title"
+              class="modal-title-link"
+              href="#"
+              target="_blank"
+              rel="noreferrer"
+            ></a>
+          </h2>
+        </header>
+
+        <div id="modal-body" class="modal-body">
+          <p class="modal-loading">Choose an article to start reading.</p>
+        </div>
+      </article>
+    </div>
+
+    <script>
+      window.Prism = window.Prism || {};
+      window.Prism.manual = true;
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/prism.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
