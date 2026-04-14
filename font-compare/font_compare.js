@@ -5,6 +5,10 @@ class FontComparator {
       font2: null,
     };
     this.uploadedFonts = new Map(); // Store uploaded fonts
+    this.systemFonts = new Map(); // Store system/fallback font metadata by option ID
+    this.systemFontLoadCache = new Map(); // Cache synthetic family names for blob-loaded system fonts
+    this.systemFontLoadPromises = new Map(); // Deduplicate concurrent loads for same system font
+    this.fontSelectionRequests = { font1: 0, font2: 0 }; // Avoid stale async selection updates
     this.currentFontSize = 16;
     this.currentLanguage = "plain";
     this.highlighter = null;
@@ -52,11 +56,11 @@ class FontComparator {
 
     // Font selectors
     this.elements.font1Select.addEventListener("change", (e) => {
-      this.selectFont(e.target.value, "font1");
+      void this.selectFont(e.target.value, "font1");
     });
 
     this.elements.font2Select.addEventListener("change", (e) => {
-      this.selectFont(e.target.value, "font2");
+      void this.selectFont(e.target.value, "font2");
     });
 
     // Font size slider
@@ -223,13 +227,21 @@ class FontComparator {
 
       for (const fontData of availableFonts) {
         const family = fontData.family;
-        if (!fontFamilies.has(family)) {
-          fontFamilies.set(family, {
-            family: family,
-            fullName: fontData.fullName,
-            postscriptName: fontData.postscriptName,
-            style: fontData.style,
-          });
+        const existing = fontFamilies.get(family);
+        const candidate = {
+          source: "local",
+          family: family,
+          fullName: fontData.fullName,
+          postscriptName: fontData.postscriptName,
+          style: fontData.style,
+          fontData: fontData,
+        };
+
+        if (!existing) {
+          fontFamilies.set(family, candidate);
+        } else if (existing.style !== "Regular" && fontData.style === "Regular") {
+          // Prefer a regular style when collapsing multiple faces into one family.
+          fontFamilies.set(family, candidate);
         }
       }
 
@@ -284,20 +296,32 @@ class FontComparator {
     // Clear existing system font options
     font1Group.innerHTML = "";
     font2Group.innerHTML = "";
+    this.systemFonts.clear();
+    this.systemFontLoadCache.clear();
+    this.systemFontLoadPromises.clear();
 
     // Add detected fonts to both dropdowns
-    fonts.forEach((font) => {
+    fonts.forEach((font, index) => {
+      const source = font.source || "fallback";
+      const nameToken = (font.postscriptName || font.family || `font_${index}`)
+        .replace(/[^a-zA-Z0-9_-]/g, "_")
+        .slice(0, 80);
+      const optionId = `${source}:${index}:${nameToken}`;
+      this.systemFonts.set(optionId, font);
+
       // Font 1 dropdown
       const option1 = document.createElement("option");
-      option1.value = font.family;
+      option1.value = optionId;
       option1.textContent = font.family;
+      option1.dataset.family = font.family;
       option1.style.fontFamily = `"${font.family}", monospace`;
       font1Group.appendChild(option1);
 
       // Font 2 dropdown
       const option2 = document.createElement("option");
-      option2.value = font.family;
+      option2.value = optionId;
       option2.textContent = font.family;
+      option2.dataset.family = font.family;
       option2.style.fontFamily = `"${font.family}", monospace`;
       font2Group.appendChild(option2);
     });
@@ -308,6 +332,7 @@ class FontComparator {
     const fallbackFonts = ["Arial", "Courier New", "Times New Roman"];
 
     const systemFonts = fallbackFonts.map((font) => ({
+      source: "fallback",
       family: font,
       fullName: font,
       postscriptName: font,
@@ -321,14 +346,35 @@ class FontComparator {
   setDefaultFonts() {
     // Set default fonts after fallback fonts are loaded
     setTimeout(() => {
+      const arialOption = this.findSystemOptionByFamily(
+        this.elements.font1Select,
+        "Arial"
+      );
+      const timesOption = this.findSystemOptionByFamily(
+        this.elements.font2Select,
+        "Times New Roman"
+      );
+
       // Set Arial for Font 1
-      this.elements.font1Select.value = "Arial";
-      this.selectFont("Arial", "font1");
+      if (arialOption) {
+        this.elements.font1Select.value = arialOption;
+        void this.selectFont(arialOption, "font1");
+      }
 
       // Set Times New Roman for Font 2
-      this.elements.font2Select.value = "Times New Roman";
-      this.selectFont("Times New Roman", "font2");
+      if (timesOption) {
+        this.elements.font2Select.value = timesOption;
+        void this.selectFont(timesOption, "font2");
+      }
     }, 100);
+  }
+
+  findSystemOptionByFamily(selectElement, familyName) {
+    const familyNameLower = familyName.toLowerCase();
+    const matchedOption = Array.from(selectElement.options).find(
+      (option) => (option.dataset.family || "").toLowerCase() === familyNameLower
+    );
+    return matchedOption ? matchedOption.value : "";
   }
 
   initSampleButtons() {
@@ -380,7 +426,9 @@ console.log(\`Fibonacci(10) = \${result}\`);`;
     this.elements.fontUploadInput.value = "";
   }
 
-  selectFont(fontIdentifier, fontKey) {
+  async selectFont(fontIdentifier, fontKey) {
+    const selectionRequestId = ++this.fontSelectionRequests[fontKey];
+
     if (!fontIdentifier) {
       this.fonts[fontKey] = null;
       this.updateFontName(fontKey, "No font selected");
@@ -399,17 +447,103 @@ console.log(\`Fibonacci(10) = \${result}\`);`;
           this.updateFontName(fontKey, uploadedFont.name);
         }
       } else {
-        // System font
-        this.fonts[fontKey] = {
-          family: fontIdentifier,
-          name: fontIdentifier,
-          loaded: true,
-          isSystem: true,
-        };
-        this.updateFontName(fontKey, fontIdentifier);
+        const systemFont = this.systemFonts.get(fontIdentifier);
+
+        // Backward compatibility for legacy option values from older URLs/states.
+        if (!systemFont) {
+          this.fonts[fontKey] = {
+            family: fontIdentifier,
+            name: fontIdentifier,
+            loaded: true,
+            isSystem: true,
+          };
+          this.updateFontName(fontKey, fontIdentifier);
+        } else if (systemFont.source === "local") {
+          const displayName = systemFont.family;
+          this.updateFontName(fontKey, displayName);
+
+          try {
+            const loadedFamily = await this.loadSystemFontFromBlob(
+              fontIdentifier,
+              systemFont
+            );
+
+            if (selectionRequestId !== this.fontSelectionRequests[fontKey]) {
+              return;
+            }
+
+            this.fonts[fontKey] = {
+              family: loadedFamily,
+              name: displayName,
+              loaded: true,
+              isSystem: true,
+            };
+          } catch (error) {
+            console.error(
+              `Error loading local font data for ${displayName}:`,
+              error
+            );
+            this.showError(
+              `Unable to load "${displayName}" from local font data. Falling back to CSS family matching.`
+            );
+
+            this.fonts[fontKey] = {
+              family: systemFont.family,
+              name: displayName,
+              loaded: true,
+              isSystem: true,
+            };
+          }
+        } else {
+          // Fallback/system-safe fonts that do not come from Local Font Access data.
+          this.fonts[fontKey] = {
+            family: systemFont.family,
+            name: systemFont.family,
+            loaded: true,
+            isSystem: true,
+          };
+          this.updateFontName(fontKey, systemFont.family);
+        }
       }
     }
+
+    if (selectionRequestId !== this.fontSelectionRequests[fontKey]) {
+      return;
+    }
+
     this.updatePreviews();
+  }
+
+  async loadSystemFontFromBlob(fontIdentifier, systemFont) {
+    if (this.systemFontLoadCache.has(fontIdentifier)) {
+      return this.systemFontLoadCache.get(fontIdentifier);
+    }
+
+    if (this.systemFontLoadPromises.has(fontIdentifier)) {
+      return this.systemFontLoadPromises.get(fontIdentifier);
+    }
+
+    const loadPromise = (async () => {
+      if (!systemFont.fontData || typeof systemFont.fontData.blob !== "function") {
+        return systemFont.family;
+      }
+
+      const blob = await systemFont.fontData.blob();
+      const arrayBuffer = await blob.arrayBuffer();
+      const safeId = fontIdentifier.replace(/[^a-zA-Z0-9_-]/g, "_");
+      const syntheticFamily = `SystemLocal_${safeId}`;
+      const fontFace = new FontFace(syntheticFamily, arrayBuffer);
+
+      await fontFace.load();
+      document.fonts.add(fontFace);
+      this.systemFontLoadCache.set(fontIdentifier, syntheticFamily);
+      return syntheticFamily;
+    })().finally(() => {
+      this.systemFontLoadPromises.delete(fontIdentifier);
+    });
+
+    this.systemFontLoadPromises.set(fontIdentifier, loadPromise);
+    return loadPromise;
   }
 
   updateFontName(fontKey, name) {
