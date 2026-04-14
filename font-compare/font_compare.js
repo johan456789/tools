@@ -479,6 +479,10 @@ console.log(\`Fibonacci(10) = \${result}\`);`;
               isSystem: true,
             };
           } catch (error) {
+            if (selectionRequestId !== this.fontSelectionRequests[fontKey]) {
+              return;
+            }
+
             console.error(
               `Error loading local font data for ${displayName}:`,
               error
