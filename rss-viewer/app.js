@@ -335,8 +335,9 @@ async function fetchTextWithProxy(url, proxyUrl) {
   try {
     return await fetchTextWithProxyUrl(url, proxyUrl);
   } catch (error) {
+    const isTimeout = error?.message?.includes("timed out");
     const trailingSlashUrl = appendTrailingSlashToUrlPath(url);
-    if (trailingSlashUrl && trailingSlashUrl !== url) {
+    if (!isTimeout && trailingSlashUrl && trailingSlashUrl !== url) {
       try {
         return await fetchTextWithProxyUrl(trailingSlashUrl, proxyUrl);
       } catch {
