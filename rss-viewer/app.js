@@ -333,28 +333,55 @@ async function fetchTextDirect(url) {
 
 async function fetchTextWithProxy(url, proxyUrl) {
   try {
-    const response = await fetchWithTimeout(
-      buildProxyRequestUrl(proxyUrl, url),
-      {
-        headers: {
-          Accept:
-            "application/atom+xml, application/rss+xml, application/xml, text/xml, text/html;q=0.9, */*;q=0.8",
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`proxy request failed with ${response.status}`);
-    }
-
-    const text = await response.text();
-    if (!text || !text.trim()) {
-      throw new Error("proxy returned empty content");
-    }
-
-    return text;
+    return await fetchTextWithProxyUrl(url, proxyUrl);
   } catch (error) {
+    const trailingSlashUrl = appendTrailingSlashToUrlPath(url);
+    if (trailingSlashUrl && trailingSlashUrl !== url) {
+      try {
+        return await fetchTextWithProxyUrl(trailingSlashUrl, proxyUrl);
+      } catch {
+        // Preserve the original failure so the displayed error matches the URL the user entered.
+      }
+    }
+
     throw new Error(`Could not fetch this URL through the configured proxy. ${summarizeAttemptError(error)}`);
+  }
+}
+
+async function fetchTextWithProxyUrl(url, proxyUrl) {
+  const response = await fetchWithTimeout(
+    buildProxyRequestUrl(proxyUrl, url),
+    {
+      headers: {
+        Accept:
+          "application/atom+xml, application/rss+xml, application/xml, text/xml, text/html;q=0.9, */*;q=0.8",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`proxy request failed with ${response.status}`);
+  }
+
+  const text = await response.text();
+  if (!text || !text.trim()) {
+    throw new Error("proxy returned empty content");
+  }
+
+  return text;
+}
+
+function appendTrailingSlashToUrlPath(url) {
+  try {
+    const parsedUrl = new URL(url);
+    if (parsedUrl.pathname.endsWith("/")) {
+      return "";
+    }
+
+    parsedUrl.pathname = `${parsedUrl.pathname}/`;
+    return parsedUrl.toString();
+  } catch {
+    return "";
   }
 }
 
