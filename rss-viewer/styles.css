@@ -336,6 +336,7 @@ button:hover {
   padding: 8px 30px 24px;
   border-bottom: 1px solid var(--line);
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .modal-meta {
@@ -349,6 +350,8 @@ button:hover {
 
 #modal-title {
   font-size: clamp(2rem, 5vw, 3.4rem);
+  overflow-wrap: break-word;
+  min-width: 0;
 }
 
 #modal-title,
