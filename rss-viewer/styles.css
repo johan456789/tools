@@ -232,7 +232,6 @@ button:hover {
   min-width: 0;
   min-height: 240px;
   padding: 22px;
-  overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.56);
   border-radius: 24px;
   background:
@@ -257,6 +256,7 @@ button:hover {
 
 .article-title {
   margin: 0;
+  min-width: 0;
   font-family: "Fraunces", serif;
   font-size: 1.55rem;
   line-height: 1.06;
@@ -265,6 +265,7 @@ button:hover {
 
 .article-excerpt {
   margin: 0;
+  min-width: 0;
   color: var(--muted);
   line-height: 1.65;
   overflow-wrap: break-word;
