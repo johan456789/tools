@@ -675,6 +675,7 @@ async function openArticle(articleId) {
   elements.modal.hidden = false;
   lockBodyScrollForModal();
   renderModalBody();
+  elements.modalBody.scrollTop = 0;
 }
 
 function closeModal() {
