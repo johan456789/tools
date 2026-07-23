@@ -597,7 +597,8 @@ async function fetchWithTimeout(url, options) {
 }
 
 function parseFeed(xmlText, sourceUrl) {
-  const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+  const lenientText = wrapLooseHtmlInCdata(xmlText);
+  const xmlDoc = parser.parseFromString(lenientText, "text/xml");
   const parserError = xmlDoc.getElementsByTagName("parsererror")[0];
   if (parserError) {
     throw new Error("The response is not valid RSS or Atom XML.");
@@ -614,6 +615,24 @@ function parseFeed(xmlText, sourceUrl) {
   }
 
   throw new Error("This URL did not look like an RSS or Atom feed.");
+}
+
+// Many real-world feeds ship unescaped HTML inside <description>,
+// <content:encoded>, or <summary>. The strict XML parser rejects that
+// because it sees tags like <img> as XML markup that must be closed.
+// Wrap the inner content in CDATA so the parser treats the body as
+// opaque text, then read it back as HTML in the article view.
+function wrapLooseHtmlInCdata(xmlText) {
+  return xmlText.replace(
+    /<(description|content:encoded|dc:description|atom:summary|summary)>([\s\S]*?)<\/\1>/gi,
+    (_, tag, content) => {
+      if (content.trim().startsWith("<![CDATA[")) {
+        return `<${tag}>${content}</${tag}>`;
+      }
+      const safe = content.replace(/]]>/g, "]]]]><![CDATA[>");
+      return `<${tag}><![CDATA[${safe}]]></${tag}>`;
+    }
+  );
 }
 
 function parseRssFeed(xmlDoc, sourceUrl) {
