@@ -134,8 +134,8 @@ async function handleUrlSubmit() {
 }
 
 async function handleXmlSubmit() {
-  const xmlText = elements.feedXmlInput.value;
-  if (!xmlText || !xmlText.trim()) {
+  const xmlText = elements.feedXmlInput.value.trim();
+  if (!xmlText) {
     setStatus("Pasted XML is empty.", "error");
     elements.feedXmlInput.focus();
     return;
@@ -152,6 +152,8 @@ async function handleXmlSubmit() {
   }
 
   syncUrlWithState();
+
+
   await loadFeed(pastedXmlSentinel, "", xmlText);
 }
 
@@ -187,7 +189,7 @@ function setMode(mode, { updateUrl = true } = {}) {
 
 function persistXmlDraft() {
   try {
-    localStorage.setItem(pastedXmlStorageKey, elements.feedXmlInput.value);
+    localStorage.setItem(pastedXmlStorageKey, elements.feedXmlInput.value.trim());
   } catch {
     // Storage failures (quota, disabled) should not break typing.
   }
@@ -226,7 +228,7 @@ function syncInputFromUrl() {
   if (mode === "url") {
     elements.feedUrlInput.value = params.get("feed") || "";
   } else {
-    elements.feedXmlInput.value = localStorage.getItem(pastedXmlStorageKey) || "";
+    elements.feedXmlInput.value = (localStorage.getItem(pastedXmlStorageKey) || "").trim();
   }
 }
 
@@ -597,7 +599,7 @@ async function fetchWithTimeout(url, options) {
 }
 
 function parseFeed(xmlText, sourceUrl) {
-  const lenientText = wrapLooseHtmlInCdata(xmlText);
+  const lenientText = wrapLooseHtmlInCdata(xmlText.trim());
   const xmlDoc = parser.parseFromString(lenientText, "text/xml");
   const parserError = xmlDoc.getElementsByTagName("parsererror")[0];
   if (parserError) {
