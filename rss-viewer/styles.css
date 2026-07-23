@@ -133,8 +133,7 @@ h1 {
   user-select: none;
   transition:
     background-color 160ms ease,
-    color 160ms ease,
-    box-shadow 160ms ease;
+    color 160ms ease;
 }
 
 .segment input {
@@ -147,10 +146,17 @@ h1 {
   cursor: pointer;
 }
 
+.segment:hover {
+  background: rgba(26, 25, 23, 0.05);
+}
+
 .segment:has(input:checked) {
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
-  color: #fff8f1;
-  box-shadow: 0 6px 16px rgba(159, 50, 23, 0.22);
+  background: rgba(213, 93, 63, 0.14);
+  color: var(--accent-deep);
+}
+
+.segment:has(input:checked):hover {
+  background: rgba(213, 93, 63, 0.2);
 }
 
 .segment:has(input:focus-visible) {
