@@ -162,13 +162,6 @@ h1 {
   display: none;
 }
 
-.mode-panel-hint {
-  margin: 10px 0 0;
-  color: var(--muted);
-  font-size: 0.88rem;
-  line-height: 1.5;
-}
-
 .xml-actions {
   display: flex;
   justify-content: flex-end;

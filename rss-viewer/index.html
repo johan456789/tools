@@ -42,7 +42,6 @@
           </div>
 
           <div class="mode-panel" data-mode-panel="url">
-            <label for="feed-url" class="field-label">Feed URL</label>
             <div class="field-row">
               <input
                 id="feed-url"
@@ -52,6 +51,7 @@
                 placeholder="https://example.com/feed.xml"
                 spellcheck="false"
                 autocomplete="off"
+                aria-label="Feed URL"
                 required
               />
               <button type="submit" id="load-button-url" class="load-button">Load feed</button>
@@ -73,18 +73,15 @@
           </div>
 
           <div class="mode-panel" data-mode-panel="xml" hidden>
-            <label for="feed-xml" class="field-label">Feed URL (or xml feed)</label>
             <textarea
               id="feed-xml"
               name="xml"
               placeholder="Paste raw RSS or Atom XML here..."
               spellcheck="false"
               autocomplete="off"
+              aria-label="Pasted RSS or Atom feed XML"
               required
             ></textarea>
-            <p class="mode-panel-hint">
-              XML feeds are stored in your browser only and won't be sent to a proxy.
-            </p>
             <div class="xml-actions">
               <button type="submit" id="load-button-xml" class="load-button">Load feed</button>
             </div>
