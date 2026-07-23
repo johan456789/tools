@@ -30,31 +30,66 @@
 
       <main class="content">
         <form id="feed-form" class="feed-form" novalidate>
-          <label for="feed-url" class="field-label">Feed URL</label>
-          <div class="field-row">
+          <div class="segmented-control" role="radiogroup" aria-label="Feed input mode">
+            <label class="segment">
+              <input type="radio" name="mode" value="url" checked />
+              <span>Feed URL</span>
+            </label>
+            <label class="segment">
+              <input type="radio" name="mode" value="xml" />
+              <span>XML Feed</span>
+            </label>
+          </div>
+
+          <div class="mode-panel" data-mode-panel="url">
+            <label for="feed-url" class="field-label">Feed URL</label>
+            <div class="field-row">
+              <input
+                id="feed-url"
+                name="feed"
+                type="url"
+                inputmode="url"
+                placeholder="https://example.com/feed.xml"
+                spellcheck="false"
+                autocomplete="off"
+                required
+              />
+              <button type="submit" id="load-button-url" class="load-button">Load feed</button>
+            </div>
+            <label for="proxy-url" class="field-label field-label-secondary">CORS Header Proxy URL</label>
             <input
-              id="feed-url"
-              name="feed"
+              id="proxy-url"
+              name="proxy"
               type="url"
               inputmode="url"
-              placeholder="https://example.com/feed.xml"
-              required
+              placeholder="https://cors-header-proxy.example.com"
+              spellcheck="false"
+              autocomplete="off"
             />
-            <button type="submit" id="load-button">Load feed</button>
+            <label class="remember-proxy">
+              <input id="remember-proxy" type="checkbox" />
+              <span>Remember proxy on this device</span>
+            </label>
           </div>
-          <label for="proxy-url" class="field-label field-label-secondary">CORS Header Proxy URL</label>
-          <input
-            id="proxy-url"
-            name="proxy"
-            type="url"
-            inputmode="url"
-            placeholder="https://cors-header-proxy.example.com"
-            required
-          />
-          <label class="remember-proxy">
-            <input id="remember-proxy" type="checkbox" />
-            <span>Remember proxy on this device</span>
-          </label>
+
+          <div class="mode-panel" data-mode-panel="xml" hidden>
+            <label for="feed-xml" class="field-label">Feed URL (or xml feed)</label>
+            <textarea
+              id="feed-xml"
+              name="xml"
+              placeholder="Paste raw RSS or Atom XML here..."
+              spellcheck="false"
+              autocomplete="off"
+              required
+            ></textarea>
+            <p class="mode-panel-hint">
+              XML feeds are stored in your browser only and won't be sent to a proxy.
+            </p>
+            <div class="xml-actions">
+              <button type="submit" id="load-button-xml" class="load-button">Load feed</button>
+            </div>
+          </div>
+
           <p class="hint" id="status-message" aria-live="polite"></p>
         </form>
 

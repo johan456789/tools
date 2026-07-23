@@ -1,9 +1,11 @@
 const elements = {
   form: document.getElementById("feed-form"),
   feedUrlInput: document.getElementById("feed-url"),
+  feedXmlInput: document.getElementById("feed-xml"),
   proxyUrlInput: document.getElementById("proxy-url"),
   rememberProxyInput: document.getElementById("remember-proxy"),
-  loadButton: document.getElementById("load-button"),
+  modeRadios: document.querySelectorAll('input[name="mode"]'),
+  modePanels: document.querySelectorAll("[data-mode-panel]"),
   statusMessage: document.getElementById("status-message"),
   feedSummary: document.getElementById("feed-summary"),
   feedMetaLabel: document.getElementById("feed-meta-label"),
@@ -26,6 +28,7 @@ let currentArticles = [];
 let currentModalArticle = null;
 let lastFocusedCard = null;
 let savedBodyPaddingRight = "";
+let currentMode = "url";
 
 const parser = new DOMParser();
 const serializer = new XMLSerializer();
@@ -33,10 +36,21 @@ const excerptLength = 220;
 const fetchAttemptTimeoutMs = 5000;
 const defaultDocumentTitle = "RSS Viewer";
 const rememberedProxyUrlStorageKey = "tools:rss-viewer:proxy-url";
+const pastedXmlStorageKey = "tools:rss-viewer:last-xml-feed";
+const modes = ["url", "xml"];
+const pastedXmlSentinel = "xml://pasted";
 
 elements.form.addEventListener("submit", handleSubmit);
 elements.closeModalButton.addEventListener("click", closeModal);
 elements.rememberProxyInput.addEventListener("change", syncRememberedProxyPreference);
+elements.feedXmlInput.addEventListener("input", persistXmlDraft);
+elements.modeRadios.forEach((radio) => {
+  radio.addEventListener("change", () => {
+    if (radio.checked) {
+      setMode(radio.value);
+    }
+  });
+});
 elements.modalViewMode.addEventListener("change", () => {
   renderModalBody();
 });
@@ -53,40 +67,53 @@ document.addEventListener("keydown", (event) => {
 });
 
 window.addEventListener("popstate", () => {
-  const previousFeed = elements.feedUrlInput.value;
+  const previousValue = getActiveInputValue();
+  const previousMode = currentMode;
   syncInputFromUrl();
-  if (elements.feedUrlInput.value && elements.feedUrlInput.value !== previousFeed) {
-    if (isProxyRequiredForFeed(elements.feedUrlInput.value) && !elements.proxyUrlInput.value.trim()) {
-      setStatus("CORS header proxy URL is a required field.", "error");
-      resetFeedView();
-      updateDocumentTitle(elements.feedUrlInput.value);
-      return;
-    }
-    loadFeed(elements.feedUrlInput.value, elements.proxyUrlInput.value);
+  const currentValue = getActiveInputValue();
+
+  if (currentMode === previousMode && currentValue === previousValue) {
     return;
   }
 
-  if (!elements.feedUrlInput.value) {
+  if (!currentValue) {
     resetFeedView();
+    updateDocumentTitle("");
+    return;
   }
 
-  updateDocumentTitle(elements.feedUrlInput.value);
+  if (currentMode === "url") {
+    if (
+      isProxyRequiredForFeed(currentValue) &&
+      !elements.proxyUrlInput.value.trim()
+    ) {
+      setStatus("CORS header proxy URL is a required field.", "error");
+      resetFeedView();
+      updateDocumentTitle(currentValue);
+      return;
+    }
+    loadFeed(currentValue, elements.proxyUrlInput.value);
+    return;
+  }
+
+  loadFeed(pastedXmlSentinel, "", currentValue);
 });
 
 restoreRememberedProxy();
 syncInputFromUrl();
-updateDocumentTitle(elements.feedUrlInput.value);
-if (elements.feedUrlInput.value && canLoadFeed(elements.feedUrlInput.value, elements.proxyUrlInput.value)) {
-  loadFeed(elements.feedUrlInput.value, elements.proxyUrlInput.value);
-} else if (elements.feedUrlInput.value && isProxyRequiredForFeed(elements.feedUrlInput.value)) {
-  setStatus("CORS header proxy URL is a required field.", "error");
-  resetFeedView();
-} else {
-  resetFeedView();
-}
+updateDocumentTitle(getActiveInputValue());
+bootFromCurrentState();
 
 async function handleSubmit(event) {
   event.preventDefault();
+  if (currentMode === "url") {
+    await handleUrlSubmit();
+    return;
+  }
+  await handleXmlSubmit();
+}
+
+async function handleUrlSubmit() {
   const feedUrl = elements.feedUrlInput.value.trim();
   const proxyUrl = elements.proxyUrlInput.value.trim();
   if (!feedUrl) {
@@ -102,27 +129,149 @@ async function handleSubmit(event) {
   }
 
   syncRememberedProxyPreference();
-  updateUrl(feedUrl);
+  syncUrlWithState();
   await loadFeed(feedUrl, proxyUrl);
+}
+
+async function handleXmlSubmit() {
+  const xmlText = elements.feedXmlInput.value;
+  if (!xmlText || !xmlText.trim()) {
+    setStatus("Pasted XML is empty.", "error");
+    elements.feedXmlInput.focus();
+    return;
+  }
+
+  try {
+    localStorage.setItem(pastedXmlStorageKey, xmlText);
+  } catch (error) {
+    setStatus(
+      `Could not store XML in localStorage: ${summarizeAttemptError(error)}`,
+      "error"
+    );
+    return;
+  }
+
+  syncUrlWithState();
+  await loadFeed(pastedXmlSentinel, "", xmlText);
+}
+
+function setMode(mode, { updateUrl = true } = {}) {
+  if (!modes.includes(mode) || mode === currentMode) {
+    syncModeControls();
+    return;
+  }
+
+  const previousMode = currentMode;
+  currentMode = mode;
+
+  if (previousMode === "url") {
+    elements.feedUrlInput.value = "";
+  } else {
+    elements.feedXmlInput.value = "";
+  }
+
+  if (mode === "xml" && !elements.feedXmlInput.value) {
+    const stored = localStorage.getItem(pastedXmlStorageKey);
+    if (stored) {
+      elements.feedXmlInput.value = stored;
+    }
+  }
+
+  syncModeControls();
+  resetFeedView();
+
+  if (updateUrl) {
+    syncUrlWithState();
+  }
+}
+
+function persistXmlDraft() {
+  try {
+    localStorage.setItem(pastedXmlStorageKey, elements.feedXmlInput.value);
+  } catch {
+    // Storage failures (quota, disabled) should not break typing.
+  }
+}
+
+function syncModeControls() {
+  elements.modeRadios.forEach((radio) => {
+    radio.checked = radio.value === currentMode;
+  });
+  elements.modePanels.forEach((panel) => {
+    panel.hidden = panel.dataset.modePanel !== currentMode;
+  });
+}
+
+function getActiveInputValue() {
+  if (currentMode === "url") {
+    return elements.feedUrlInput.value.trim();
+  }
+  return elements.feedXmlInput.value;
+}
+
+function getModeFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("xml") === "1") {
+    return "xml";
+  }
+  return "url";
 }
 
 function syncInputFromUrl() {
   const params = new URLSearchParams(window.location.search);
-  const feed = params.get("feed") || "";
-  elements.feedUrlInput.value = feed;
+  const mode = getModeFromUrl();
+  currentMode = mode;
+  syncModeControls();
+
+  if (mode === "url") {
+    elements.feedUrlInput.value = params.get("feed") || "";
+  } else {
+    elements.feedXmlInput.value = localStorage.getItem(pastedXmlStorageKey) || "";
+  }
 }
 
-function updateUrl(feedUrl) {
+function syncUrlWithState() {
   const nextUrl = new URL(window.location.href);
-  if (feedUrl) {
-    nextUrl.searchParams.set("feed", feedUrl);
-  } else {
-    nextUrl.searchParams.delete("feed");
+  nextUrl.searchParams.delete("feed");
+  nextUrl.searchParams.delete("xml");
+
+  if (currentMode === "url") {
+    const feed = elements.feedUrlInput.value.trim();
+    if (feed) {
+      nextUrl.searchParams.set("feed", feed);
+    }
+  } else if (elements.feedXmlInput.value.trim()) {
+    nextUrl.searchParams.set("xml", "1");
   }
+
   if (nextUrl.toString() === window.location.href) {
     return;
   }
   window.history.pushState({}, "", nextUrl);
+}
+
+function bootFromCurrentState() {
+  const value = getActiveInputValue();
+  if (!value) {
+    resetFeedView();
+    return;
+  }
+
+  if (currentMode === "url") {
+    if (canLoadFeed(value, elements.proxyUrlInput.value)) {
+      loadFeed(value, elements.proxyUrlInput.value);
+      return;
+    }
+    if (isProxyRequiredForFeed(value)) {
+      setStatus("CORS header proxy URL is a required field.", "error");
+      resetFeedView();
+      return;
+    }
+    resetFeedView();
+    return;
+  }
+
+  loadFeed(pastedXmlSentinel, "", value);
 }
 
 function restoreRememberedProxy() {
@@ -150,10 +299,14 @@ function syncRememberedProxyPreference() {
   localStorage.setItem(rememberedProxyUrlStorageKey, proxyUrl);
 }
 
-async function loadFeed(feedUrl, proxyUrl) {
+async function loadFeed(feedUrl, proxyUrl, rawXml = null) {
   const normalizedFeedUrl = feedUrl.trim();
   const normalizedProxyUrl = proxyUrl.trim();
-  const feedCacheKey = buildFeedCacheKey(normalizedFeedUrl, normalizedProxyUrl);
+  const feedCacheKey = buildFeedCacheKey(
+    normalizedFeedUrl,
+    normalizedProxyUrl,
+    rawXml
+  );
   articleCache.clear();
   currentArticles = [];
   closeModal();
@@ -170,7 +323,8 @@ async function loadFeed(feedUrl, proxyUrl) {
       return;
     }
 
-    const xmlText = await fetchFeedText(normalizedFeedUrl, normalizedProxyUrl);
+    const xmlText =
+      rawXml !== null ? rawXml : await fetchFeedText(normalizedFeedUrl, normalizedProxyUrl);
     const parsedFeed = parseFeed(xmlText, normalizedFeedUrl);
     feedCache.set(feedCacheKey, parsedFeed);
     renderLoadedFeed(parsedFeed, normalizedFeedUrl);
@@ -228,6 +382,9 @@ function updateDocumentTitle(feedUrl, feedLabel = "") {
 }
 
 function getSiteNameFromUrl(feedUrl) {
+  if (feedUrl === pastedXmlSentinel) {
+    return "Pasted XML";
+  }
   try {
     const url = new URL(feedUrl);
     return url.hostname;
@@ -244,7 +401,10 @@ async function fetchFeedText(url, proxyUrl) {
   return fetchTextWithProxy(url, proxyUrl);
 }
 
-function buildFeedCacheKey(feedUrl, proxyUrl) {
+function buildFeedCacheKey(feedUrl, proxyUrl, rawXml) {
+  if (rawXml !== null) {
+    return `pasted-xml::${rawXml.length}::${hashString(rawXml)}`;
+  }
   if (isLocalFeedUrl(feedUrl)) {
     return `direct::${feedUrl}`;
   }
@@ -252,11 +412,22 @@ function buildFeedCacheKey(feedUrl, proxyUrl) {
   return `${proxyUrl}::${feedUrl}`;
 }
 
+function hashString(value) {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) | 0;
+  }
+  return hash.toString(36);
+}
+
 function canLoadFeed(feedUrl, proxyUrl) {
   return Boolean(feedUrl.trim()) && (!isProxyRequiredForFeed(feedUrl) || Boolean(proxyUrl.trim()));
 }
 
 function isProxyRequiredForFeed(feedUrl) {
+  if (feedUrl === pastedXmlSentinel) {
+    return false;
+  }
   return !isLocalFeedUrl(feedUrl);
 }
 
@@ -653,8 +824,15 @@ function setStatus(message, state) {
 }
 
 function setLoadingState(isLoading) {
-  elements.loadButton.disabled = isLoading;
-  elements.loadButton.textContent = isLoading ? "Loading..." : "Load feed";
+  const buttons = [
+    document.getElementById("load-button-url"),
+    document.getElementById("load-button-xml"),
+  ].filter((button) => button instanceof HTMLButtonElement);
+
+  for (const button of buttons) {
+    button.disabled = isLoading;
+    button.textContent = isLoading ? "Loading..." : "Load feed";
+  }
 }
 
 async function openArticle(articleId) {
