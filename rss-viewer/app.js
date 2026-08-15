@@ -726,6 +726,18 @@ function normalizeArticle(article, index) {
 
 function findFirstNode(parent, names) {
   const wantedNames = Array.isArray(names) ? names : [names];
+
+  for (const wantedName of wantedNames) {
+    const found = findFirstNodeByName(parent, wantedName);
+    if (found) {
+      return found;
+    }
+  }
+
+  return null;
+}
+
+function findFirstNodeByName(parent, wantedName) {
   const queue = [parent];
 
   while (queue.length > 0) {
@@ -739,7 +751,7 @@ function findFirstNode(parent, names) {
       : Array.from(current.children);
 
     for (const child of children) {
-      if (wantedNames.includes(child.localName)) {
+      if (child.localName === wantedName) {
         return child;
       }
       queue.push(child);
