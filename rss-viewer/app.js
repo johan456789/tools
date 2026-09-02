@@ -483,7 +483,7 @@ async function fetchTextDirect(url) {
     const response = await fetchWithTimeout(url, {
       headers: {
         Accept:
-          "application/atom+xml, application/rss+xml, application/xml, text/xml, text/html;q=0.9, */*;q=0.8",
+          "application/atom+xml, application/rss+xml, application/xml, text/xml, text/html;q=0.9, */*;q=0.9",
       },
     });
 
@@ -498,6 +498,17 @@ async function fetchTextDirect(url) {
 
     return text;
   } catch (error) {
+    const isBlockedByPolicy =
+      error?.message === "Failed to fetch" &&
+      window.location.protocol === "https:";
+    if (isBlockedByPolicy) {
+      throw new Error(
+        `Cannot fetch LAN address from an HTTPS page — browsers block HTTPS→HTTP private-network requests. ` +
+        `Either serve the RSS Viewer locally (http://localhost:...), ` +
+        `use the "XML Feed" tab to paste the feed content manually, ` +
+        `or add CORS + Private Network Access headers to your server.`
+      );
+    }
     throw new Error(
       `Could not fetch this local URL directly from the browser. ${summarizeAttemptError(error)}`
     );
