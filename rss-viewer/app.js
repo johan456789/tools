@@ -642,6 +642,17 @@ function wrapLooseHtmlInCdata(xmlText) {
       if (content.trim().startsWith("<![CDATA[")) {
         return `<${tag}>${content}</${tag}>`;
       }
+      // Already entity-escaped (e.g. &lt;figure&gt;) — let the XML
+      // parser decode it once to valid HTML. Wrapping in CDATA would
+      // preserve the escapes literally and break rendering.
+      if (/&lt;|&gt;/.test(content)) {
+        return `<${tag}>${content}</${tag}>`;
+      }
+      // Only wrap when content contains raw unescaped HTML that would
+      // otherwise be parsed as XML and cause a parsererror.
+      if (!/<[a-zA-Z\/!][^>]*>/.test(content)) {
+        return `<${tag}>${content}</${tag}>`;
+      }
       const safe = content.replace(/]]>/g, "]]]]><![CDATA[>");
       return `<${tag}><![CDATA[${safe}]]></${tag}>`;
     }
