@@ -343,6 +343,13 @@ button:hover {
   text-transform: uppercase;
 }
 
+.article-byline {
+  margin-top: -8px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
 .article-title {
   margin: 0;
   min-width: 0;
@@ -513,6 +520,17 @@ button:hover {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.modal-author {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.modal-author[hidden] {
+  display: none;
 }
 
 #modal-title {
