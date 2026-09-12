@@ -11,12 +11,16 @@ const elements = {
   feedMetaLabel: document.getElementById("feed-meta-label"),
   feedTitle: document.getElementById("feed-title"),
   feedDescription: document.getElementById("feed-description"),
+  activeFilter: document.getElementById("active-filter"),
+  activeFilterLabel: document.getElementById("active-filter-label"),
+  clearFilterButton: document.getElementById("clear-filter-button"),
   articlesGrid: document.getElementById("articles-grid"),
   modal: document.getElementById("article-modal"),
   modalCard: document.getElementById("modal-card"),
   modalHeader: document.getElementById("modal-header"),
   modalTitle: document.getElementById("modal-title"),
   modalDate: document.getElementById("modal-date"),
+  modalCategories: document.getElementById("modal-categories"),
   modalViewMode: document.getElementById("modal-view-mode"),
   modalBody: document.getElementById("modal-body"),
   closeModalButton: document.getElementById("close-modal-button"),
@@ -27,6 +31,7 @@ const feedCache = new Map();
 let currentArticles = [];
 let currentModalArticle = null;
 let lastFocusedCard = null;
+let activeCategoryFilter = null;
 let savedBodyPaddingRight = "";
 let currentMode = "url";
 
@@ -58,6 +63,30 @@ elements.modal.addEventListener("click", (event) => {
   if (event.target instanceof HTMLElement && event.target.dataset.closeModal) {
     closeModal();
   }
+});
+elements.clearFilterButton.addEventListener("click", () => {
+  clearCategoryFilter();
+});
+elements.articlesGrid.addEventListener("click", (event) => {
+  const pill = event.target instanceof HTMLElement ? event.target.closest(".category-pill") : null;
+  if (!pill || !elements.articlesGrid.contains(pill)) {
+    return;
+  }
+  applyCategoryFilter(pill.dataset.category || "");
+});
+elements.modalCategories.addEventListener("click", (event) => {
+  const pill = event.target instanceof HTMLElement ? event.target.closest(".category-pill") : null;
+  if (!pill) {
+    return;
+  }
+  const wasActive = isCategoryActive(pill.dataset.category || "");
+  closeModal();
+  if (wasActive) {
+    clearCategoryFilter();
+  } else {
+    applyCategoryFilter(pill.dataset.category || "");
+  }
+  elements.clearFilterButton.focus();
 });
 
 document.addEventListener("keydown", (event) => {
@@ -311,9 +340,11 @@ async function loadFeed(feedUrl, proxyUrl, rawXml = null) {
   );
   articleCache.clear();
   currentArticles = [];
+  activeCategoryFilter = null;
   closeModal();
   clearArticles();
   elements.feedSummary.hidden = true;
+  elements.activeFilter.hidden = true;
   setLoadingState(true);
   setStatus("Loading feed and parsing entries...", "loading");
   updateDocumentTitle(normalizedFeedUrl, "Loading");
@@ -342,8 +373,10 @@ async function loadFeed(feedUrl, proxyUrl, rawXml = null) {
 
 function renderLoadedFeed(parsedFeed, feedUrl) {
   currentArticles = parsedFeed.items;
+  activeCategoryFilter = null;
   renderFeedSummary(parsedFeed);
   renderArticles(parsedFeed.items);
+  updateFilterBar();
 
   if (parsedFeed.items.length === 0) {
     updateDocumentTitle(feedUrl, "Empty");
@@ -358,9 +391,11 @@ function renderLoadedFeed(parsedFeed, feedUrl) {
 function resetFeedView() {
   articleCache.clear();
   currentArticles = [];
+  activeCategoryFilter = null;
   closeModal();
   clearArticles();
   elements.feedSummary.hidden = true;
+  elements.activeFilter.hidden = true;
   elements.feedMetaLabel.textContent = "Current feed";
   setStatus("", "ready");
 }
@@ -678,6 +713,7 @@ function parseRssFeed(xmlDoc, sourceUrl) {
         content:
           getNodeMarkup(item, ["encoded", "content", "description"]) ||
           getNodeText(item, ["encoded", "content", "description"]),
+        categories: getRssCategories(item),
         rawXml: serializer.serializeToString(item),
       },
       index
@@ -714,6 +750,7 @@ function parseAtomFeed(xmlDoc, sourceUrl) {
           getNodeText(entry, "content") ||
           getNodeMarkup(entry, "summary") ||
           getNodeText(entry, "summary"),
+        categories: getAtomCategories(entry),
         rawXml: serializer.serializeToString(entry),
       },
       index
@@ -739,6 +776,7 @@ function normalizeArticle(article, index) {
     link: article.link,
     date: article.date || "",
     dateLabel: formatDate(article.date),
+    categories: dedupeStrings(article.categories || []),
     excerpt: clipText(summaryText || contentText, excerptLength) || "No excerpt available.",
     contentHtml: rawContent || rawSummary || "",
     contentText,
@@ -791,6 +829,123 @@ function getChildrenByName(parent, name) {
   return Array.from(parent.children).filter((child) => child.localName === name);
 }
 
+function getRssCategories(item) {
+  return getChildrenByName(item, "category")
+    .map((node) => node?.textContent?.trim() || "")
+    .filter(Boolean);
+}
+
+function getAtomCategories(entry) {
+  return getChildrenByName(entry, "category")
+    .map(
+      (node) =>
+        node?.getAttribute("label")?.trim() ||
+        node?.getAttribute("term")?.trim() ||
+        node?.textContent?.trim() ||
+        ""
+    )
+    .filter(Boolean);
+}
+
+function dedupeStrings(values) {
+  const seen = new Set();
+  const result = [];
+  for (const value of values) {
+    const key = value.toLowerCase();
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    result.push(value);
+  }
+  return result;
+}
+
+function renderCategoryPills(categories) {
+  return categories
+    .map((category) => {
+      const isActive = isCategoryActive(category);
+      return `<button type="button" class="category-pill${isActive ? " is-active" : ""}" data-category="${escapeHtml(category)}" aria-pressed="${isActive ? "true" : "false"}" title="Show only “${escapeHtml(category)}” articles">${escapeHtml(category)}</button>`;
+    })
+    .join("");
+}
+
+function isCategoryActive(category) {
+  return (
+    activeCategoryFilter !== null &&
+    activeCategoryFilter.toLowerCase() === category.trim().toLowerCase()
+  );
+}
+
+function applyCategoryFilter(category) {
+  const normalized = (category || "").trim();
+  if (!normalized) {
+    return;
+  }
+  if (isCategoryActive(normalized)) {
+    clearCategoryFilter();
+    return;
+  }
+  activeCategoryFilter = normalized;
+  applyFilterToGrid();
+  updateFilterBar();
+}
+
+function clearCategoryFilter() {
+  if (activeCategoryFilter === null) {
+    return;
+  }
+  activeCategoryFilter = null;
+  applyFilterToGrid();
+  updateFilterBar();
+}
+
+function getVisibleArticles() {
+  if (activeCategoryFilter === null) {
+    return currentArticles;
+  }
+  const wanted = activeCategoryFilter.toLowerCase();
+  return currentArticles.filter((article) =>
+    (article.categories || []).some((category) => category.toLowerCase() === wanted)
+  );
+}
+
+function applyFilterToGrid() {
+  const visibleIds = new Set(getVisibleArticles().map((article) => article.id));
+  for (const card of elements.articlesGrid.children) {
+    if (card instanceof HTMLElement && card.dataset.articleId) {
+      card.hidden = !visibleIds.has(card.dataset.articleId);
+    }
+  }
+  for (const pill of elements.articlesGrid.querySelectorAll(".category-pill")) {
+    const active = isCategoryActive(pill.dataset.category || "");
+    pill.classList.toggle("is-active", active);
+    pill.setAttribute("aria-pressed", active ? "true" : "false");
+  }
+}
+
+function updateFilterBar() {
+  if (activeCategoryFilter === null) {
+    elements.activeFilter.hidden = true;
+    renderFeedCountLabel(currentArticles.length, currentArticles.length);
+    return;
+  }
+
+  const visibleCount = getVisibleArticles().length;
+  renderFeedCountLabel(visibleCount, currentArticles.length);
+  elements.activeFilterLabel.textContent =
+    `Category: ${activeCategoryFilter} — ${visibleCount} of ${currentArticles.length} article${currentArticles.length === 1 ? "" : "s"}`;
+  elements.activeFilter.hidden = false;
+}
+
+function renderFeedCountLabel(visibleCount, totalCount) {
+  if (activeCategoryFilter === null) {
+    elements.feedMetaLabel.textContent = `Current feed (${totalCount} article${totalCount === 1 ? "" : "s"})`;
+    return;
+  }
+  elements.feedMetaLabel.textContent = `Current feed (${visibleCount} of ${totalCount} articles)`;
+}
+
 function getDirectChildText(parent, names) {
   const wantedNames = Array.isArray(names) ? names : [names];
   const node = Array.from(parent?.children || []).find((child) =>
@@ -826,9 +981,7 @@ function getNodeMarkup(parent, names) {
 
 function renderFeedSummary(feed) {
   const articleCount = feed.items.length;
-  elements.feedMetaLabel.textContent = `Current feed (${articleCount} article${
-    articleCount === 1 ? "" : "s"
-  })`;
+  renderFeedCountLabel(articleCount, articleCount);
   elements.feedTitle.textContent = feed.title;
   elements.feedDescription.textContent = feed.description || "No feed description available.";
   elements.feedSummary.hidden = false;
@@ -840,24 +993,45 @@ function renderArticles(items) {
   const fragment = document.createDocumentFragment();
 
   for (const article of items) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "article-card";
-    button.dataset.articleId = article.id;
+    const card = document.createElement("article");
+    card.className = "article-card";
+    card.dataset.articleId = article.id;
+    card.tabIndex = 0;
+    card.setAttribute("role", "link");
+    card.setAttribute("aria-label", `${article.title}. Read article.`);
 
-    button.innerHTML = `
+    card.innerHTML = `
       <span class="article-date">${escapeHtml(article.dateLabel || "Date unknown")}</span>
       <h3 class="article-title">${escapeHtml(article.title)}</h3>
+      ${
+        article.categories.length > 0
+          ? `<span class="article-categories" aria-label="Article categories">${renderCategoryPills(article.categories)}</span>`
+          : ""
+      }
       <p class="article-excerpt">${escapeHtml(article.excerpt)}</p>
       <span class="article-footer">Read article</span>
     `;
 
-    button.addEventListener("click", () => {
-      lastFocusedCard = button;
+    card.addEventListener("click", (event) => {
+      if (event.target instanceof HTMLElement && event.target.closest(".category-pill")) {
+        return;
+      }
+      lastFocusedCard = card;
       openArticle(article.id);
     });
 
-    fragment.appendChild(button);
+    card.addEventListener("keydown", (event) => {
+      if (event.target !== card) {
+        return;
+      }
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        lastFocusedCard = card;
+        openArticle(article.id);
+      }
+    });
+
+    fragment.appendChild(card);
   }
 
   elements.articlesGrid.appendChild(fragment);
@@ -900,6 +1074,7 @@ async function openArticle(articleId) {
   elements.modalViewMode.value = "rendered";
   elements.modalTitle.textContent = article.title;
   elements.modalDate.textContent = article.dateLabel || "Date unknown";
+  renderModalCategories(article);
   if (article.link) {
     elements.modalTitle.href = article.link;
   } else {
@@ -911,11 +1086,29 @@ async function openArticle(articleId) {
   elements.modalBody.scrollTop = 0;
 }
 
+function renderModalCategories(article) {
+  if (!elements.modalCategories) {
+    return;
+  }
+  const categories = article.categories || [];
+  if (categories.length === 0) {
+    elements.modalCategories.hidden = true;
+    elements.modalCategories.replaceChildren();
+    return;
+  }
+  elements.modalCategories.hidden = false;
+  elements.modalCategories.innerHTML = renderCategoryPills(categories);
+}
+
 function closeModal() {
   elements.modal.hidden = true;
   unlockBodyScrollForModal();
   currentModalArticle = null;
-  if (lastFocusedCard) {
+  if (elements.modalCategories) {
+    elements.modalCategories.hidden = true;
+    elements.modalCategories.replaceChildren();
+  }
+  if (lastFocusedCard && !lastFocusedCard.hidden) {
     lastFocusedCard.focus();
   }
 }

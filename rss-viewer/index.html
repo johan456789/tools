@@ -96,6 +96,12 @@
             <h2 id="feed-title">Untitled feed</h2>
           </div>
           <p id="feed-description" class="feed-description"></p>
+          <div class="active-filter" id="active-filter" hidden>
+            <p class="active-filter-label" id="active-filter-label"></p>
+            <button type="button" class="clear-filter-button" id="clear-filter-button">
+              Show all articles
+            </button>
+          </div>
         </section>
 
         <section
@@ -145,6 +151,7 @@
               rel="noreferrer"
             ></a>
           </h2>
+          <div class="modal-categories" id="modal-categories" hidden></div>
         </header>
 
         <div id="modal-body" class="modal-body">
