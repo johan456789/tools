@@ -6,7 +6,8 @@ A static in-browser RSS and Atom feed reader for the `/tools` directory.
 
 * Paste any RSS or Atom feed URL into the page.
 * Or paste raw RSS or Atom XML directly into the page (XML mode skips the proxy).
-* Browse articles as cards with title, published date, and excerpt.
+* Browse articles as cards with title, published date, excerpt, and category pills.
+* Show each article's categories (RSS `<category>`, Atom `<category term/label>`) as pills on cards and in the reading window.
 * Fall back to a clipped article body when the feed does not provide a dedicated excerpt.
 * Open each article in a floating reading window.
 * Show feed item content as provided by the feed without fetching the linked article page.

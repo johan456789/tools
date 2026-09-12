@@ -17,6 +17,7 @@ const elements = {
   modalHeader: document.getElementById("modal-header"),
   modalTitle: document.getElementById("modal-title"),
   modalDate: document.getElementById("modal-date"),
+  modalCategories: document.getElementById("modal-categories"),
   modalViewMode: document.getElementById("modal-view-mode"),
   modalBody: document.getElementById("modal-body"),
   closeModalButton: document.getElementById("close-modal-button"),
@@ -678,6 +679,7 @@ function parseRssFeed(xmlDoc, sourceUrl) {
         content:
           getNodeMarkup(item, ["encoded", "content", "description"]) ||
           getNodeText(item, ["encoded", "content", "description"]),
+        categories: getRssCategories(item),
         rawXml: serializer.serializeToString(item),
       },
       index
@@ -714,6 +716,7 @@ function parseAtomFeed(xmlDoc, sourceUrl) {
           getNodeText(entry, "content") ||
           getNodeMarkup(entry, "summary") ||
           getNodeText(entry, "summary"),
+        categories: getAtomCategories(entry),
         rawXml: serializer.serializeToString(entry),
       },
       index
@@ -739,6 +742,7 @@ function normalizeArticle(article, index) {
     link: article.link,
     date: article.date || "",
     dateLabel: formatDate(article.date),
+    categories: dedupeStrings(article.categories || []),
     excerpt: clipText(summaryText || contentText, excerptLength) || "No excerpt available.",
     contentHtml: rawContent || rawSummary || "",
     contentText,
@@ -789,6 +793,42 @@ function getChildrenByName(parent, name) {
   }
 
   return Array.from(parent.children).filter((child) => child.localName === name);
+}
+
+function getRssCategories(item) {
+  return getChildrenByName(item, "category")
+    .map((node) => node?.textContent?.trim() || "")
+    .filter(Boolean);
+}
+
+function getAtomCategories(entry) {
+  return getChildrenByName(entry, "category")
+    .map(
+      (node) =>
+        node?.getAttribute("label")?.trim() ||
+        node?.getAttribute("term")?.trim() ||
+        node?.textContent?.trim() ||
+        ""
+    )
+    .filter(Boolean);
+}
+
+function dedupeStrings(values) {
+  const seen = new Set();
+  const result = [];
+  for (const value of values) {
+    const key = value.toLowerCase();
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    result.push(value);
+  }
+  return result;
+}
+
+function renderCategoryPills(categories) {
+  return categories.map((category) => `<span class="category-pill">${escapeHtml(category)}</span>`).join("");
 }
 
 function getDirectChildText(parent, names) {
@@ -848,6 +888,11 @@ function renderArticles(items) {
     button.innerHTML = `
       <span class="article-date">${escapeHtml(article.dateLabel || "Date unknown")}</span>
       <h3 class="article-title">${escapeHtml(article.title)}</h3>
+      ${
+        article.categories.length > 0
+          ? `<span class="article-categories" aria-label="Article categories">${renderCategoryPills(article.categories)}</span>`
+          : ""
+      }
       <p class="article-excerpt">${escapeHtml(article.excerpt)}</p>
       <span class="article-footer">Read article</span>
     `;
@@ -900,6 +945,7 @@ async function openArticle(articleId) {
   elements.modalViewMode.value = "rendered";
   elements.modalTitle.textContent = article.title;
   elements.modalDate.textContent = article.dateLabel || "Date unknown";
+  renderModalCategories(article);
   if (article.link) {
     elements.modalTitle.href = article.link;
   } else {
@@ -911,10 +957,28 @@ async function openArticle(articleId) {
   elements.modalBody.scrollTop = 0;
 }
 
+function renderModalCategories(article) {
+  if (!elements.modalCategories) {
+    return;
+  }
+  const categories = article.categories || [];
+  if (categories.length === 0) {
+    elements.modalCategories.hidden = true;
+    elements.modalCategories.replaceChildren();
+    return;
+  }
+  elements.modalCategories.hidden = false;
+  elements.modalCategories.innerHTML = renderCategoryPills(categories);
+}
+
 function closeModal() {
   elements.modal.hidden = true;
   unlockBodyScrollForModal();
   currentModalArticle = null;
+  if (elements.modalCategories) {
+    elements.modalCategories.hidden = true;
+    elements.modalCategories.replaceChildren();
+  }
   if (lastFocusedCard) {
     lastFocusedCard.focus();
   }

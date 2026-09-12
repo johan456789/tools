@@ -359,6 +359,37 @@ button:hover {
   font-weight: 600;
 }
 
+.article-categories,
+.modal-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.modal-categories {
+  margin-top: 14px;
+}
+
+.modal-categories[hidden] {
+  display: none;
+}
+
+.category-pill {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 4px 12px;
+  border: 1px solid rgba(159, 50, 23, 0.22);
+  border-radius: 999px;
+  background: rgba(213, 93, 63, 0.12);
+  color: var(--accent-deep);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  overflow-wrap: break-word;
+}
+
 .modal {
   position: fixed;
   inset: 0;
