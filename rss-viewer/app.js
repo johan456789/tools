@@ -934,7 +934,7 @@ function updateFilterBar() {
   const visibleCount = getVisibleArticles().length;
   renderFeedCountLabel(visibleCount, currentArticles.length);
   elements.activeFilterLabel.textContent =
-    `Showing ${visibleCount} of ${currentArticles.length} article${currentArticles.length === 1 ? "" : "s"} in “${activeCategoryFilter}”`;
+    `Category: ${activeCategoryFilter} — ${visibleCount} of ${currentArticles.length} article${currentArticles.length === 1 ? "" : "s"}`;
   elements.activeFilter.hidden = false;
 }
 
