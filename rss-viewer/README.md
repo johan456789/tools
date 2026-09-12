@@ -6,7 +6,8 @@ A static in-browser RSS and Atom feed reader for the `/tools` directory.
 
 * Paste any RSS or Atom feed URL into the page.
 * Or paste raw RSS or Atom XML directly into the page (XML mode skips the proxy).
-* Browse articles as cards with title, published date, excerpt, and category pills.
+* Browse articles as cards with title, author byline, published date, excerpt, and category pills.
+* Show each article's author (RSS `dc:creator`/`author`, Atom `author > name`) as a byline on cards and in the reading window.
 * Show each article's categories (RSS `<category>`, Atom `<category term/label>`) as pills on cards and in the reading window.
 * Click a category pill to filter the feed to that category; the active filter is shown as a banner with a "Show all articles" button to clear it. Clicking the active pill again also clears the filter.
 * Fall back to a clipped article body when the feed does not provide a dedicated excerpt.

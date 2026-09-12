@@ -20,6 +20,7 @@ const elements = {
   modalHeader: document.getElementById("modal-header"),
   modalTitle: document.getElementById("modal-title"),
   modalDate: document.getElementById("modal-date"),
+  modalAuthor: document.getElementById("modal-author"),
   modalCategories: document.getElementById("modal-categories"),
   modalViewMode: document.getElementById("modal-view-mode"),
   modalBody: document.getElementById("modal-body"),
@@ -714,6 +715,7 @@ function parseRssFeed(xmlDoc, sourceUrl) {
           getNodeMarkup(item, ["encoded", "content", "description"]) ||
           getNodeText(item, ["encoded", "content", "description"]),
         categories: getRssCategories(item),
+        author: getRssAuthor(item),
         rawXml: serializer.serializeToString(item),
       },
       index
@@ -751,6 +753,7 @@ function parseAtomFeed(xmlDoc, sourceUrl) {
           getNodeMarkup(entry, "summary") ||
           getNodeText(entry, "summary"),
         categories: getAtomCategories(entry),
+        author: getAtomAuthor(entry),
         rawXml: serializer.serializeToString(entry),
       },
       index
@@ -774,6 +777,7 @@ function normalizeArticle(article, index) {
     id: article.id || `article-${index}`,
     title: article.title,
     link: article.link,
+    author: (article.author || "").trim(),
     date: article.date || "",
     dateLabel: formatDate(article.date),
     categories: dedupeStrings(article.categories || []),
@@ -827,6 +831,29 @@ function getChildrenByName(parent, name) {
   }
 
   return Array.from(parent.children).filter((child) => child.localName === name);
+}
+
+function getRssAuthor(item) {
+  const raw =
+    getNodeText(item, ["creator", "author"]) ||
+    getDirectChildText(item, "managingEditor");
+  // RSS <author> is spec'd as an email address, often with a display
+  // name in parentheses ("a@b.c (Jane)"). Prefer the display name.
+  const displayName = raw.match(/\(([^)]+)\)\s*$/);
+  return (displayName ? displayName[1] : raw).trim();
+}
+
+function getAtomAuthor(entry) {
+  const authorNode = findFirstNode(entry, "author");
+  if (!authorNode) {
+    return "";
+  }
+  return (
+    getNodeText(authorNode, "name") ||
+    getNodeText(authorNode, "email") ||
+    authorNode.textContent?.trim() ||
+    ""
+  );
 }
 
 function getRssCategories(item) {
@@ -1004,6 +1031,11 @@ function renderArticles(items) {
       <span class="article-date">${escapeHtml(article.dateLabel || "Date unknown")}</span>
       <h3 class="article-title">${escapeHtml(article.title)}</h3>
       ${
+        article.author
+          ? `<span class="article-byline">By ${escapeHtml(article.author)}</span>`
+          : ""
+      }
+      ${
         article.categories.length > 0
           ? `<span class="article-categories" aria-label="Article categories">${renderCategoryPills(article.categories)}</span>`
           : ""
@@ -1074,6 +1106,7 @@ async function openArticle(articleId) {
   elements.modalViewMode.value = "rendered";
   elements.modalTitle.textContent = article.title;
   elements.modalDate.textContent = article.dateLabel || "Date unknown";
+  renderModalAuthor(article);
   renderModalCategories(article);
   if (article.link) {
     elements.modalTitle.href = article.link;
@@ -1084,6 +1117,19 @@ async function openArticle(articleId) {
   lockBodyScrollForModal();
   renderModalBody();
   elements.modalBody.scrollTop = 0;
+}
+
+function renderModalAuthor(article) {
+  if (!elements.modalAuthor) {
+    return;
+  }
+  if (!article.author) {
+    elements.modalAuthor.hidden = true;
+    elements.modalAuthor.textContent = "";
+    return;
+  }
+  elements.modalAuthor.hidden = false;
+  elements.modalAuthor.textContent = `By ${article.author}`;
 }
 
 function renderModalCategories(article) {
@@ -1104,6 +1150,10 @@ function closeModal() {
   elements.modal.hidden = true;
   unlockBodyScrollForModal();
   currentModalArticle = null;
+  if (elements.modalAuthor) {
+    elements.modalAuthor.hidden = true;
+    elements.modalAuthor.textContent = "";
+  }
   if (elements.modalCategories) {
     elements.modalCategories.hidden = true;
     elements.modalCategories.replaceChildren();
