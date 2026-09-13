@@ -37,6 +37,11 @@
   .port { font-size: 2.5rem; font-weight: 700; font-variant-numeric: tabular-nums; margin: 0.25rem 0; }
   .meta { font-size: 0.9rem; opacity: 0.8; overflow-wrap: anywhere; }
   .meta code { font-size: 0.85rem; }
+  .meta .win {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-thickness: 1px;
+  }
   .error { color: #b91c1c; font-weight: 600; }
   @media (prefers-color-scheme: dark) { .error { color: #f87171; } }
   details { margin-top: 1.5rem; font-size: 0.9rem; opacity: 0.85; }
@@ -156,6 +161,15 @@ async function copyPort(port, $ok) {
   }
 }
 
+function highlightDigits(digits, match) {
+  if (!match) return escapeHtml(digits);
+  const before = escapeHtml(digits.slice(0, match.index));
+  const win = escapeHtml(digits.slice(match.index, match.index + match.len));
+  const after = escapeHtml(digits.slice(match.index + match.len));
+  const title = match.len + '-digit window ' + match.window + ' at position ' + match.index;
+  return before + '<span class="win" title="' + escapeHtml(title) + '">' + win + '</span>' + after;
+}
+
 function render(name) {
   if (!name) {
     $result.hidden = true;
@@ -176,9 +190,7 @@ function render(name) {
       e.currentTarget.blur();
     });
     $details.innerHTML =
-      'crc32: <code>' + r.hex + ' (' + r.crc + ')</code><br>' +
-      'matched ' + r.match.len + '-digit window ' +
-      '<code>' + escapeHtml(r.match.window) + '</code> at position ' + r.match.index + '.';
+      'crc32: <code>' + r.hex + ' (' + highlightDigits(r.digits, r.match) + ')</code>';
   } else {
     lastPort = null;
     $output.innerHTML =
