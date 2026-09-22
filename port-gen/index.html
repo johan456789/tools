@@ -152,10 +152,18 @@ function escapeHtml(s) {
   }[c]));
 }
 
+let copyTimer = null;
+
 async function copyPort(port, $ok) {
   try {
     await navigator.clipboard.writeText(port);
     $ok.textContent = "copied!";
+    if (copyTimer) clearTimeout(copyTimer);
+    copyTimer = setTimeout(() => {
+      // element may be gone after re-render — guard it
+      if ($ok.isConnected) $ok.textContent = "";
+      copyTimer = null;
+    }, 1500);
   } catch (_) {
     $ok.textContent = port;
   }
@@ -171,6 +179,7 @@ function highlightDigits(digits, match) {
 }
 
 function render(name) {
+  if (copyTimer) { clearTimeout(copyTimer); copyTimer = null; }
   if (!name) {
     $result.hidden = true;
     lastPort = null;
