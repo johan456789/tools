@@ -121,6 +121,42 @@
       aria-labelledby="modal-title"
     >
       <div class="modal-backdrop" data-close-modal="true"></div>
+      <button
+        type="button"
+        class="modal-nav-arrow modal-nav-prev"
+        id="prev-article-button"
+        aria-label="Previous article"
+        title="Previous article (←)"
+      >
+        <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" focusable="false">
+          <path
+            d="M15 5l-7 7 7 7"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="modal-nav-arrow modal-nav-next"
+        id="next-article-button"
+        aria-label="Next article"
+        title="Next article (→)"
+      >
+        <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" focusable="false">
+          <path
+            d="M9 5l7 7-7 7"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
       <article class="modal-card" id="modal-card">
         <div class="modal-toolbar">
           <label class="modal-view-control" for="modal-view-mode">

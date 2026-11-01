@@ -12,6 +12,7 @@ A static in-browser RSS and Atom feed reader for the `/tools` directory.
 * Click a category pill to filter the feed to that category; the active filter is shown as a banner with a "Show all articles" button to clear it. Clicking the active pill again also clears the filter.
 * Fall back to a clipped article body when the feed does not provide a dedicated excerpt.
 * Open each article in a floating reading window.
+* Move to the previous/next article with the angle arrows on either side of the reading window or the ←/→ keys, without closing it; navigation follows the active category filter and the arrows disable at the ends of the list.
 * Show feed item content as provided by the feed without fetching the linked article page.
 * Persist the current feed URL in the page query string with `?feed=...`.
 * Use `?xml=1` to indicate XML mode; the XML itself is stored in localStorage.
