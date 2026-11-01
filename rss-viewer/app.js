@@ -17,6 +17,8 @@ const elements = {
   articlesGrid: document.getElementById("articles-grid"),
   modal: document.getElementById("article-modal"),
   modalCard: document.getElementById("modal-card"),
+  modalPrevButton: document.getElementById("prev-article-button"),
+  modalNextButton: document.getElementById("next-article-button"),
   modalHeader: document.getElementById("modal-header"),
   modalTitle: document.getElementById("modal-title"),
   modalDate: document.getElementById("modal-date"),
@@ -48,6 +50,8 @@ const pastedXmlSentinel = "xml://pasted";
 
 elements.form.addEventListener("submit", handleSubmit);
 elements.closeModalButton.addEventListener("click", closeModal);
+elements.modalPrevButton.addEventListener("click", () => navigateModalArticle(-1));
+elements.modalNextButton.addEventListener("click", () => navigateModalArticle(1));
 elements.rememberProxyInput.addEventListener("change", syncRememberedProxyPreference);
 elements.feedXmlInput.addEventListener("input", persistXmlDraft);
 elements.modeRadios.forEach((radio) => {
@@ -93,6 +97,14 @@ elements.modalCategories.addEventListener("click", (event) => {
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !elements.modal.hidden) {
     closeModal();
+    return;
+  }
+  if (
+    !elements.modal.hidden &&
+    (event.key === "ArrowLeft" || event.key === "ArrowRight") &&
+    !(event.target instanceof HTMLElement && event.target.closest("select, input, textarea"))
+  ) {
+    navigateModalArticle(event.key === "ArrowLeft" ? -1 : 1);
   }
 });
 
@@ -1096,14 +1108,16 @@ function setLoadingState(isLoading) {
   }
 }
 
-async function openArticle(articleId) {
+async function openArticle(articleId, options = {}) {
   const article = currentArticles.find((entry) => entry.id === articleId);
   if (!article) {
     return;
   }
 
   currentModalArticle = article;
-  elements.modalViewMode.value = "rendered";
+  if (!options.preserveViewMode) {
+    elements.modalViewMode.value = "rendered";
+  }
   elements.modalTitle.textContent = article.title;
   elements.modalDate.textContent = article.dateLabel || "Date unknown";
   renderModalAuthor(article);
@@ -1114,9 +1128,35 @@ async function openArticle(articleId) {
     elements.modalTitle.removeAttribute("href");
   }
   elements.modal.hidden = false;
+  updateModalNavButtons();
   lockBodyScrollForModal();
   renderModalBody();
   elements.modalBody.scrollTop = 0;
+}
+
+function navigateModalArticle(step) {
+  if (!currentModalArticle || elements.modal.hidden) {
+    return;
+  }
+  const visibleArticles = getVisibleArticles();
+  const index = visibleArticles.findIndex((entry) => entry.id === currentModalArticle.id);
+  if (index === -1) {
+    return;
+  }
+  const nextIndex = index + step;
+  if (nextIndex < 0 || nextIndex >= visibleArticles.length) {
+    return;
+  }
+  openArticle(visibleArticles[nextIndex].id, { preserveViewMode: true });
+}
+
+function updateModalNavButtons() {
+  const visibleArticles = getVisibleArticles();
+  const index = currentModalArticle
+    ? visibleArticles.findIndex((entry) => entry.id === currentModalArticle.id)
+    : -1;
+  elements.modalPrevButton.disabled = index <= 0;
+  elements.modalNextButton.disabled = index === -1 || index >= visibleArticles.length - 1;
 }
 
 function renderModalAuthor(article) {

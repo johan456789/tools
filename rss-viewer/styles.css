@@ -614,6 +614,57 @@ button:hover {
   flex-shrink: 0;
 }
 
+.modal-nav-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--panel-strong);
+  color: var(--ink);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 12px 32px rgba(18, 12, 8, 0.35);
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    opacity 160ms ease;
+}
+
+.modal-nav-arrow:hover:not(:disabled),
+.modal-nav-arrow:focus-visible:not(:disabled) {
+  background: var(--accent);
+  color: #fff8f1;
+}
+
+.modal-nav-arrow:active:not(:disabled) {
+  background: var(--accent-deep);
+}
+
+.modal-nav-arrow:focus-visible {
+  outline: 3px solid rgba(213, 93, 63, 0.35);
+  outline-offset: 2px;
+}
+
+.modal-nav-arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+  box-shadow: none;
+}
+
+/* Hug the modal card's edges; clamp to the screen corner on narrow viewports. */
+.modal-nav-prev {
+  left: max(8px, calc((100% - 860px) / 2 - 64px));
+}
+
+.modal-nav-next {
+  right: max(8px, calc((100% - 860px) / 2 - 64px));
+}
+
 body.modal-open {
   overflow: hidden;
 }
@@ -648,5 +699,18 @@ body.modal-open {
   .modal-body {
     padding-left: 18px;
     padding-right: 18px;
+  }
+
+  .modal-nav-arrow {
+    width: 40px;
+    height: 40px;
+  }
+
+  .modal-nav-prev {
+    left: 8px;
+  }
+
+  .modal-nav-next {
+    right: 8px;
   }
 }
