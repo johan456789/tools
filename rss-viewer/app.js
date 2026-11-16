@@ -755,7 +755,7 @@ function parseAtomFeed(xmlDoc, sourceUrl) {
         id: getNodeText(entry, "id") || linkNode?.getAttribute("href") || `${sourceUrl}#${index}`,
         title: getNodeText(entry, "title") || "Untitled article",
         link: linkNode?.getAttribute("href") || "",
-        date: getNodeText(entry, ["updated", "published"]),
+        date: getNodeText(entry, ["published", "updated"]),
         summary:
           getNodeMarkup(entry, "summary") ||
           getNodeText(entry, "summary"),
